@@ -1,0 +1,152 @@
+{% extends "patient_base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h3">My Profile</h2>
+        <p class="text-muted">View and update your personal information.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/patient/profile/update">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ current_user.name }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ current_user.email or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="gender" class="form-label">Gender</label>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="">Select Gender</option>
+                                <option value="Male" {{ 'selected' if patient and patient.gender == 'Male' }}>Male</option>
+                                <option value="Female" {{ 'selected' if patient and patient.gender == 'Female' }}>Female</option>
+                                <option value="Other" {{ 'selected' if patient and patient.gender == 'Other' }}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="dob" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="dob" name="dob" 
+                                   value="{{ patient.dob.strftime('%Y-%m-%d') if patient and patient.dob else '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="blood_group" class="form-label">Blood Group</label>
+                            <select class="form-select" id="blood_group" name="blood_group">
+                                <option value="">Select Blood Group</option>
+                                <option value="A+" {{ 'selected' if patient and patient.blood_group == 'A+' }}>A+</option>
+                                <option value="A-" {{ 'selected' if patient and patient.blood_group == 'A-' }}>A-</option>
+                                <option value="B+" {{ 'selected' if patient and patient.blood_group == 'B+' }}>B+</option>
+                                <option value="B-" {{ 'selected' if patient and patient.blood_group == 'B-' }}>B-</option>
+                                <option value="AB+" {{ 'selected' if patient and patient.blood_group == 'AB+' }}>AB+</option>
+                                <option value="AB-" {{ 'selected' if patient and patient.blood_group == 'AB-' }}>AB-</option>
+                                <option value="O+" {{ 'selected' if patient and patient.blood_group == 'O+' }}>O+</option>
+                                <option value="O-" {{ 'selected' if patient and patient.blood_group == 'O-' }}>O-</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ current_user.phone or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3">{{ patient.address if patient else '' }}</textarea>
+                    </div>
+                    
+
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Profile Summary</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 24px;">
+                    {{ current_user.name[0] }}
+                </div>
+                <h5>{{ current_user.name }}</h5>
+                <p class="text-muted">Patient ID: {{ patient.patient_id if patient and patient.patient_id else 'Not assigned' }}</p>
+                
+                <hr>
+                
+                <div class="text-start">
+                    <p class="mb-2"><strong>Gender:</strong> {{ patient.gender if patient and patient.gender else 'Not specified' }}</p>
+                    <p class="mb-2"><strong>Blood Group:</strong> {{ patient.blood_group if patient and patient.blood_group else 'Not specified' }}</p>
+                    <p class="mb-2"><strong>Age:</strong> 
+                        {% if patient and patient.dob %}
+                            {{ (date.today() - patient.dob).days // 365 }} years
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </p>
+                    <p class="mb-2"><strong>Registered:</strong> {{ patient.created_at.strftime('%B %d, %Y') if patient and patient.created_at else 'Unknown' }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/patient/appointments/book" class="btn btn-outline-primary">
+                        <i class="fas fa-calendar-plus me-2"></i>Book Appointment
+                    </a>
+                    <a href="/patient/history" class="btn btn-outline-info">
+                        <i class="fas fa-file-medical me-2"></i>Medical History
+                    </a>
+                    <a href="/patient/appointments" class="btn btn-outline-success">
+                        <i class="fas fa-calendar-check me-2"></i>My Appointments
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+</style>
+{% endblock %}

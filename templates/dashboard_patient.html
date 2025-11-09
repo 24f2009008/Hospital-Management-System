@@ -1,0 +1,215 @@
+{% extends "patient_base.html" %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h3">Welcome, {{ current_user.name }}!</h2>
+        <p class="text-muted">Here's your health overview and quick actions.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Upcoming Appointments</h6>
+                        <h3 class="text-success">{{ upcoming }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-check text-success fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-info">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Total Appointments</h6>
+                        <h3 class="text-info">{{ stats.total_appointments if stats else 0 }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar text-info fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Available Doctors</h6>
+                        <h3 class="text-primary">{{ doctors|length }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-md text-primary fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="/patient/doctors" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-search me-2"></i>Find Doctors
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/patient/appointments/book" class="btn btn-outline-success w-100">
+                            <i class="fas fa-calendar-plus me-2"></i>Book Appointment
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/patient/history" class="btn btn-outline-info w-100">
+                            <i class="fas fa-file-medical me-2"></i>Medical History
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/patient/profile" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-user-cog me-2"></i>Update Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Doctors -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Available Doctors</h5>
+                <a href="/patient/doctors" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if doctors %}
+                <div class="row">
+                    {% for doctor in doctors[:6] %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card doctor-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="user-avatar me-3">{{ doctor.name[3] if doctor.name.startswith('Dr.') else doctor.name[0] }}</div>
+                                    <div>
+                                        <h6 class="card-title mb-0">{{ doctor.name }}</h6>
+                                        <small class="text-muted">{{ doctor.department }}</small>
+                                    </div>
+                                </div>
+                                <p class="card-text small">
+                                    <strong>Qualification:</strong> {{ doctor.qualification }}<br>
+                                    <strong>Experience:</strong> {{ doctor.experience if doctor.experience else 'N/A' }} years
+                                </p>
+                                <a href="/patient/appointments/book?doctor_id={{ doctor.id }}" class="btn btn-sm btn-outline-primary w-100">
+                                    Book Appointment
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-md text-muted fs-1 mb-3"></i>
+                    <h6 class="text-muted">No doctors available at the moment</h6>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Appointments -->
+{% if appointments %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recent Appointments</h5>
+                <a href="/patient/appointments" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Date & Time</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments[:5] %}
+                            <tr>
+                                <td>{{ appointment.doctor_name }}</td>
+                                <td>{{ appointment.date }} {{ appointment.time }}</td>
+                                <td>{{ appointment.reason }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' if appointment.status == 'Booked' else 'danger' }}">
+                                        {{ appointment.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if appointment.status == 'Booked' %}
+                                    <div class="btn-group">
+                                        <a href="/patient/appointments/{{ appointment.id }}/reschedule" class="btn btn-sm btn-outline-primary" title="Reschedule">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form method="POST" action="/patient/appointments/{{ appointment.id }}/cancel" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Are you sure you want to cancel this appointment?')" 
+                                                    title="Cancel">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.doctor-card {
+    transition: transform 0.2s ease-in-out;
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.doctor-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+</style>
+{% endblock %}
+

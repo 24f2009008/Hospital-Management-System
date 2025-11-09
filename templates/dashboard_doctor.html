@@ -1,0 +1,199 @@
+{% extends "doctor_base.html" %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h3">Doctor Dashboard</h2>
+        <p class="text-muted">Welcome, {{ current_user.name }}. Here's your schedule overview.</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Today's Appointments</h6>
+                        <h3 class="text-primary">{{ todays_appointments }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-day text-primary fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-warning">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Pending Consultations</h6>
+                        <h3 class="text-warning">{{ pending_consultations }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock text-warning fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Upcoming (7 days)</h6>
+                        <h3 class="text-success">{{ upcoming_appointments }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-week text-success fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-info">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Assigned Patients</h6>
+                        <h3 class="text-info">{{ assigned_patients|length }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-info fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="/doctor/appointments" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-calendar-check me-2"></i>View Appointments
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/doctor/availability" class="btn btn-outline-success w-100">
+                            <i class="fas fa-calendar-alt me-2"></i>Set Availability
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/doctor/patients" class="btn btn-outline-info w-100">
+                            <i class="fas fa-users me-2"></i>My Patients
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/doctor/profile" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-user-cog me-2"></i>Update Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assigned Patients -->
+{% if assigned_patients %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recent Patients</h5>
+                <a href="/doctor/patients" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for patient in assigned_patients %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-3">{{ patient.name[0] }}</div>
+                                    <div>
+                                        <h6 class="card-title mb-0">{{ patient.name }}</h6>
+                                        <small class="text-muted">{{ patient.gender }}, {{ patient.age }} years</small>
+                                        <br><small class="text-muted">Blood: {{ patient.blood_group }}</small>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <a href="/doctor/patients/{{ patient.id }}/history" class="btn btn-sm btn-outline-primary w-100">
+                                        View History
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Appointment Trends Chart -->
+{% if chart_data.dates %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Weekly Appointment Trends</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="appointmentChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('appointmentChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_data.dates | tojson }},
+                datasets: [{
+                    label: 'Appointments',
+                    data: {{ chart_data.counts | tojson }},
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Appointments'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

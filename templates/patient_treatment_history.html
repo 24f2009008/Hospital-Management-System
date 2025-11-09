@@ -1,0 +1,180 @@
+{% extends "patient_base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h3">Medical History</h2>
+        <p class="text-muted">Your complete medical records and treatment history.</p>
+    </div>
+</div>
+
+<!-- Medical Summary -->
+{% if medical_history %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Medical Summary</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Allergies</h6>
+                <p>{{ medical_history.allergies or 'None reported' }}</p>
+                
+                <h6>Chronic Conditions</h6>
+                <p>{{ medical_history.chronic_conditions or 'None reported' }}</p>
+                
+                <h6>Current Medications</h6>
+                <p>{{ medical_history.current_medications or 'None reported' }}</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Previous Surgeries</h6>
+                <p>{{ medical_history.previous_surgeries or 'None reported' }}</p>
+                
+                <h6>Family History</h6>
+                <p>{{ medical_history.family_history or 'None reported' }}</p>
+                
+                <h6>Lifestyle</h6>
+                <p>
+                    <strong>Smoking:</strong> {{ medical_history.smoking_status or 'Not specified' }}<br>
+                    <strong>Alcohol:</strong> {{ medical_history.alcohol_consumption or 'Not specified' }}<br>
+                    <strong>Exercise:</strong> {{ medical_history.exercise_frequency or 'Not specified' }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Treatment History -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Treatment History</h5>
+    </div>
+    <div class="card-body">
+        {% if treatments %}
+        <div class="timeline">
+            {% for treatment in treatments %}
+            <div class="timeline-item mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ treatment.date.strftime('%B %d, %Y') }}</h6>
+                            <small class="text-muted">{{ treatment.doctor_name }} - {{ treatment.department }}</small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Chief Complaint</h6>
+                                <p>{{ treatment.chief_complaint or treatment.reason_for_visit or 'Not specified' }}</p>
+                                
+                                <h6>Diagnosis</h6>
+                                <p>{{ treatment.diagnosis or 'Not specified' }}</p>
+                                
+                                {% if treatment.tests %}
+                                <h6>Tests Ordered</h6>
+                                <p>{{ treatment.tests }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Treatment Plan</h6>
+                                <p>{{ treatment.treatment_plan or 'Not specified' }}</p>
+                                
+                                <h6>Prescription</h6>
+                                <p>{{ treatment.prescription or 'No medications prescribed' }}</p>
+                                
+                                {% if treatment.follow_up_instructions %}
+                                <h6>Follow-up Instructions</h6>
+                                <p>{{ treatment.follow_up_instructions }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if treatment.blood_pressure or treatment.heart_rate or treatment.temperature %}
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6>Vital Signs</h6>
+                                <div class="d-flex gap-4">
+                                    {% if treatment.blood_pressure %}
+                                    <span><strong>BP:</strong> {{ treatment.blood_pressure }}</span>
+                                    {% endif %}
+                                    {% if treatment.heart_rate %}
+                                    <span><strong>HR:</strong> {{ treatment.heart_rate }} bpm</span>
+                                    {% endif %}
+                                    {% if treatment.temperature %}
+                                    <span><strong>Temp:</strong> {{ treatment.temperature }}°F</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if treatment.notes %}
+                        <hr>
+                        <h6>Doctor's Notes</h6>
+                        <p class="text-muted">{{ treatment.notes }}</p>
+                        {% endif %}
+                        
+                        {% if treatment.next_visit_date %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            <strong>Next Visit:</strong> {{ treatment.next_visit_date.strftime('%B %d, %Y') }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-medical text-muted fs-1 mb-3"></i>
+            <h5 class="text-muted">No treatment history found</h5>
+            <p class="text-muted">Your treatment records will appear here after your appointments.</p>
+            <a href="/patient/appointments/book" class="btn btn-primary">
+                <i class="fas fa-calendar-plus me-2"></i>Book Your First Appointment
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    background: #28a745;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 3px #28a745;
+}
+
+.timeline-item::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 12px;
+    width: 2px;
+    height: calc(100% - 12px);
+    background: #dee2e6;
+}
+
+.timeline-item:last-child::after {
+    display: none;
+}
+</style>
+{% endblock %}

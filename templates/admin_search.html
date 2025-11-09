@@ -1,0 +1,117 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h3">Advanced Search</h2>
+        <p class="text-muted">Search for doctors, patients, and appointments across the system.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Search Criteria</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/admin/search/results">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="search_type" class="form-label">Search Type *</label>
+                    <select class="form-select" id="search_type" name="search_type" required>
+                        <option value="">Select search type...</option>
+                        <option value="doctor">Doctors</option>
+                        <option value="patient">Patients</option>
+                        <option value="appointment">Appointments</option>
+                    </select>
+                </div>
+                <div class="col-md-8 mb-3">
+                    <label for="search_term" class="form-label">Search Term *</label>
+                    <input type="text" class="form-control" id="search_term" name="search_term" 
+                           placeholder="Enter name, ID, or other search criteria..." required>
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Search
+                </button>
+                <button type="reset" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>Clear
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Search Tips -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Doctor Search</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Search by name</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by specialization</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by department</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by qualification</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Patient Search</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Search by name</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by patient ID</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by contact number</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by email</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Appointment Search</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li><i class="fas fa-check text-success me-2"></i>Search by appointment ID</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by patient name</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by doctor name</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Search by date</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('search_type').addEventListener('change', function() {
+    const searchTerm = document.getElementById('search_term');
+    const searchType = this.value;
+    
+    switch(searchType) {
+        case 'doctor':
+            searchTerm.placeholder = 'Enter doctor name, specialization, or department...';
+            break;
+        case 'patient':
+            searchTerm.placeholder = 'Enter patient name, ID, or contact number...';
+            break;
+        case 'appointment':
+            searchTerm.placeholder = 'Enter appointment ID, patient name, or doctor name...';
+            break;
+        default:
+            searchTerm.placeholder = 'Enter search criteria...';
+    }
+});
+</script>
+{% endblock %}

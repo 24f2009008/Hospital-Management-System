@@ -1,0 +1,172 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h3">Search Results</h2>
+            <p class="text-muted">
+                {% if search_term %}
+                    Results for "{{ search_term }}" in {{ search_type|title }}s
+                {% else %}
+                    No search performed
+                {% endif %}
+            </p>
+        </div>
+        <a href="/admin/search" class="btn btn-outline-primary">
+            <i class="fas fa-search me-2"></i>New Search
+        </a>
+    </div>
+</div>
+
+{% if results %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Found {{ results|length }} result(s)</h5>
+    </div>
+    <div class="card-body">
+        {% if search_type == 'doctor' %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Specialization</th>
+                        <th>Qualification</th>
+                        <th>Experience</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>DR{{ "%03d"|format(result.id) }}</td>
+                        <td>{{ result.name }}</td>
+                        <td>{{ result.specialization }}</td>
+                        <td>{{ result.qualification }}</td>
+                        <td>{{ result.experience }} years</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if result.status == 'active' else 'warning' }}">
+                                {{ result.status|title }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% elif search_type == 'patient' %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Name</th>
+                        <th>Gender</th>
+                        <th>Blood Group</th>
+                        <th>Contact</th>
+                        <th>Registered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.patient_id or 'PAT' + "%06d"|format(result.id) }}</td>
+                        <td>{{ result.name }}</td>
+                        <td>{{ result.gender }}</td>
+                        <td>{{ result.blood_group }}</td>
+                        <td>{{ result.contact }}</td>
+                        <td>{{ result.registered_date }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% elif search_type == 'appointment' %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Appointment ID</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result.appointment_number or 'APT' + "%08d"|format(result.id) }}</td>
+                        <td>{{ result.patient_name }}</td>
+                        <td>{{ result.doctor_name }}</td>
+                        <td>{{ result.date }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if result.status == 'Completed' else 'warning' if result.status == 'Booked' else 'danger' }}">
+                                {{ result.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-info" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-search text-muted fs-1 mb-3"></i>
+        <h5 class="text-muted">No results found</h5>
+        <p class="text-muted">
+            {% if search_term %}
+                No {{ search_type }}s found matching "{{ search_term }}". Try adjusting your search criteria.
+            {% else %}
+                Please perform a search to see results.
+            {% endif %}
+        </p>
+        <a href="/admin/search" class="btn btn-primary">
+            <i class="fas fa-search me-2"></i>Try Another Search
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

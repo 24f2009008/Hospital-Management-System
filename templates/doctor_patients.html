@@ -1,0 +1,318 @@
+{% extends "doctor_base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h3">My Patients</h2>
+        <p class="text-muted">View and manage your assigned patients.</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Total Patients</h6>
+                        <h3 class="text-primary">{{ patients|length }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-primary fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Active Cases</h6>
+                        <h3 class="text-success">{{ patients|selectattr("appointment_count", "gt", 0)|list|length }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-check text-success fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-warning">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Recent Visits</h6>
+                        <h3 class="text-warning">{{ patients|selectattr("last_visit")|list|length }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-check text-warning fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card border-info">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Follow-ups</h6>
+                        <h3 class="text-info">{{ patients|selectattr("appointment_count", "gt", 1)|list|length }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-redo text-info fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="searchPatients" placeholder="Search patients by name...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="filterGender">
+                    <option value="">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="filterBloodGroup">
+                    <option value="">All Blood Groups</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Patients Grid -->
+<div class="row" id="patientsGrid">
+    {% for patient in patients %}
+    <div class="col-md-6 col-lg-4 mb-4 patient-card" 
+         data-name="{{ patient.name.lower() }}" 
+         data-gender="{{ patient.gender.lower() if patient.gender else '' }}" 
+         data-blood="{{ patient.blood_group.lower() if patient.blood_group else '' }}">
+        <div class="card h-100 patient-profile-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="user-avatar me-3">{{ patient.name[0] }}</div>
+                    <div>
+                        <h5 class="card-title mb-0">{{ patient.name }}</h5>
+                        <small class="text-muted">Patient ID: PAT{{ "%06d"|format(patient.id) }}</small>
+                    </div>
+                </div>
+                
+                <div class="patient-details">
+                    <p class="card-text">
+                        <strong>Age:</strong> {{ patient.age }}<br>
+                        <strong>Gender:</strong> {{ patient.gender or 'Not specified' }}<br>
+                        <strong>Blood Group:</strong> {{ patient.blood_group or 'Not specified' }}<br>
+                        <strong>Appointments:</strong> {{ patient.appointment_count }}
+                    </p>
+                    
+                    {% if patient.last_visit %}
+                    <p class="text-muted small">
+                        <strong>Last Visit:</strong> {{ patient.last_visit[0].strftime('%Y-%m-%d') if patient.last_visit[0] else 'Never' }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="viewPatientHistory({{ patient.id }})">
+                        <i class="fas fa-file-medical me-2"></i>View History
+                    </button>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-success btn-sm" onclick="scheduleAppointment({{ patient.id }})">
+                            <i class="fas fa-calendar-plus me-1"></i>Schedule
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="viewPatientProfile({{ patient.id }})">
+                            <i class="fas fa-user me-1"></i>Profile
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- No Results Message -->
+<div id="noResults" class="text-center py-5" style="display: none;">
+    <i class="fas fa-users text-muted fs-1 mb-3"></i>
+    <h5 class="text-muted">No patients found</h5>
+    <p class="text-muted">Try adjusting your search criteria.</p>
+</div>
+
+<!-- Patient History Modal -->
+<div class="modal fade" id="patientHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Patient Medical History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="patientHistoryContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="printPatientHistory()">
+                    <i class="fas fa-print me-2"></i>Print History
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.patient-profile-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.patient-profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.patient-details {
+    min-height: 100px;
+}
+</style>
+
+<script>
+// Search and filter functionality
+document.getElementById('searchPatients').addEventListener('input', filterPatients);
+document.getElementById('filterGender').addEventListener('change', filterPatients);
+document.getElementById('filterBloodGroup').addEventListener('change', filterPatients);
+
+function filterPatients() {
+    const searchTerm = document.getElementById('searchPatients').value.toLowerCase();
+    const genderFilter = document.getElementById('filterGender').value.toLowerCase();
+    const bloodFilter = document.getElementById('filterBloodGroup').value.toLowerCase();
+    
+    const patientCards = document.querySelectorAll('.patient-card');
+    let visibleCount = 0;
+    
+    patientCards.forEach(card => {
+        const name = card.dataset.name;
+        const gender = card.dataset.gender;
+        const blood = card.dataset.blood;
+        
+        const nameMatch = !searchTerm || name.includes(searchTerm);
+        const genderMatch = !genderFilter || gender.includes(genderFilter);
+        const bloodMatch = !bloodFilter || blood.includes(bloodFilter);
+        
+        if (nameMatch && genderMatch && bloodMatch) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';
+}
+
+function viewPatientHistory(patientId) {
+    document.getElementById('patientHistoryContent').innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading patient history...</p>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('patientHistoryModal'));
+    modal.show();
+    
+    // Simulate loading patient history
+    setTimeout(() => {
+        document.getElementById('patientHistoryContent').innerHTML = `
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Patient Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Name:</strong> Sample Patient</p>
+                            <p><strong>Age:</strong> 35 years</p>
+                            <p><strong>Gender:</strong> Male</p>
+                            <p><strong>Blood Group:</strong> O+</p>
+                            <p><strong>Contact:</strong> +1234567890</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">Recent Treatments</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item mb-3">
+                                    <strong>2024-01-15:</strong> General Checkup<br>
+                                    <small class="text-muted">Diagnosis: Healthy, routine checkup</small>
+                                </div>
+                                <div class="timeline-item mb-3">
+                                    <strong>2023-12-10:</strong> Flu Treatment<br>
+                                    <small class="text-muted">Diagnosis: Seasonal flu, prescribed rest and medication</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+function scheduleAppointment(patientId) {
+    alert('Schedule appointment functionality would redirect to appointment booking for patient #' + patientId);
+}
+
+function viewPatientProfile(patientId) {
+    alert('View patient profile functionality would show detailed patient information for patient #' + patientId);
+}
+
+function printPatientHistory() {
+    window.print();
+}
+</script>
+{% endblock %}

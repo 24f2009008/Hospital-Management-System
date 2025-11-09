@@ -1,0 +1,327 @@
+{% extends "doctor_base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h4">My Appointments</h2>
+        <p class="text-muted">Manage your patient appointments and consultations.</p>
+    </div>
+</div>
+
+<!-- Appointment Statistics -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Total Appointments</h6>
+                        <h3 class="text-primary">{{ total_appointments }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-alt text-primary fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Today's Appointments</h6>
+                        <h3 class="text-success">{{ todays_appointments }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-day text-success fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-info">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted">Upcoming (7 days)</h6>
+                        <h3 class="text-info">{{ upcoming_appointments }}</h3>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-week text-info fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointments Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Appointment List</h5>
+        <div class="btn-group">
+            <button class="btn btn-outline-primary btn-sm active" data-filter="all">All</button>
+            <button class="btn btn-outline-primary btn-sm" data-filter="today">Today</button>
+            <button class="btn btn-outline-primary btn-sm" data-filter="upcoming">Upcoming</button>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if appointments %}
+        <div class="table-responsive">
+            <table class="table table-striped" id="appointmentsTable">
+                <thead>
+                    <tr>
+                        <th>Appointment ID</th>
+                        <th>Patient</th>
+                        <th>Date & Time</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in appointments %}
+                    <tr data-date="{{ appointment.appointment_date }}" data-status="{{ appointment.status }}">
+                        <td>#APT{{ "%03d" % appointment.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2">{{ appointment.patient_name[0] }}</div>
+                                <div>
+                                    <strong>{{ appointment.patient_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ appointment.patient_gender }}, {{ appointment.patient_age }} years
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <strong>{{ appointment.appointment_date }}</strong>
+                            <br>
+                            <small class="text-muted">{{ appointment.appointment_time }}</small>
+                        </td>
+                        <td>{{ appointment.reason }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' if appointment.status == 'Booked' else 'danger' if appointment.status == 'Cancelled' else 'info' }}">
+                                {{ appointment.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary view-appointment" 
+                                        data-appointment-id="{{ appointment.id }}"
+                                        data-bs-toggle="tooltip" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% if appointment.status == 'Booked' %}
+                                <button class="btn btn-sm btn-outline-success complete-appointment" 
+                                        data-appointment-id="{{ appointment.id }}"
+                                        data-bs-toggle="tooltip" title="Mark Complete">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger cancel-appointment" 
+                                        data-appointment-id="{{ appointment.id }}"
+                                        data-bs-toggle="tooltip" title="Cancel">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times text-muted fs-1 mb-3"></i>
+            <h5 class="text-muted">No Appointments Found</h5>
+            <p class="text-muted">You don't have any appointments scheduled yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Appointment Details Modal -->
+<div class="modal fade" id="appointmentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Appointment Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="appointmentDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.appointment-row {
+    transition: all 0.3s ease;
+}
+.appointment-row:hover {
+    background-color: #f8f9fa;
+}
+.status-badge {
+    font-size: 0.75rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Filter appointments
+    const filterButtons = document.querySelectorAll('[data-filter]');
+    const appointmentRows = document.querySelectorAll('#appointmentsTable tbody tr');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filter = this.getAttribute('data-filter');
+            
+            // Update active button
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter rows
+            appointmentRows.forEach(row => {
+                const appointmentDate = row.getAttribute('data-date');
+                const status = row.getAttribute('data-status');
+                const today = new Date().toISOString().split('T')[0];
+                
+                let showRow = true;
+                
+                if (filter === 'today') {
+                    showRow = appointmentDate === today && status === 'Booked';
+                } else if (filter === 'upcoming') {
+                    showRow = appointmentDate >= today && status === 'Booked';
+                }
+                // else 'all' - show all rows
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        });
+    });
+
+    // View appointment details
+    document.querySelectorAll('.view-appointment').forEach(button => {
+        button.addEventListener('click', function() {
+            const appointmentId = this.getAttribute('data-appointment-id');
+            loadAppointmentDetails(appointmentId);
+        });
+    });
+
+    // Complete appointment
+    document.querySelectorAll('.complete-appointment').forEach(button => {
+        button.addEventListener('click', function() {
+            const appointmentId = this.getAttribute('data-appointment-id');
+            updateAppointmentStatus(appointmentId, 'Completed');
+        });
+    });
+
+    // Cancel appointment
+    document.querySelectorAll('.cancel-appointment').forEach(button => {
+        button.addEventListener('click', function() {
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+                const appointmentId = this.getAttribute('data-appointment-id');
+                updateAppointmentStatus(appointmentId, 'Cancelled');
+            }
+        });
+    });
+
+    function loadAppointmentDetails(appointmentId) {
+        fetch(`/doctor/appointments/${appointmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const appointment = data.appointment;
+                    const modalContent = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Patient Information</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Name:</strong></td><td>${appointment.patient_name}</td></tr>
+                                    <tr><td><strong>Age/Gender:</strong></td><td>${appointment.patient_age} years, ${appointment.patient_gender}</td></tr>
+                                    <tr><td><strong>Blood Group:</strong></td><td>${appointment.patient_blood_group}</td></tr>
+                                    <tr><td><strong>Phone:</strong></td><td>${appointment.patient_phone}</td></tr>
+                                    <tr><td><strong>Address:</strong></td><td>${appointment.patient_address}</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Appointment Details</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Date:</strong></td><td>${appointment.appointment_date}</td></tr>
+                                    <tr><td><strong>Time:</strong></td><td>${appointment.appointment_time}</td></tr>
+                                    <tr><td><strong>Reason:</strong></td><td>${appointment.reason}</td></tr>
+                                    <tr><td><strong>Status:</strong></td><td><span class="badge bg-${getStatusBadgeColor(appointment.status)}">${appointment.status}</span></td></tr>
+                                    <tr><td><strong>Created:</strong></td><td>${appointment.created_at}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Additional Notes</h6>
+                                <p class="text-muted">${appointment.notes}</p>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('appointmentDetailsContent').innerHTML = modalContent;
+                    new bootstrap.Modal(document.getElementById('appointmentDetailsModal')).show();
+                } else {
+                    alert('Error loading appointment details: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading appointment details');
+            });
+    }
+
+    function updateAppointmentStatus(appointmentId, status) {
+        fetch('/doctor/appointments/update_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                appointment_id: appointmentId,
+                status: status
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload(); // Reload to reflect changes
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating appointment status');
+        });
+    }
+
+    function getStatusBadgeColor(status) {
+        switch(status) {
+            case 'Completed': return 'success';
+            case 'Booked': return 'warning';
+            case 'Cancelled': return 'danger';
+            default: return 'info';
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "doctor_base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="h3">My Profile</h2>
+        <p class="text-muted">View and update your professional information.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Professional Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/doctor/profile/update">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ current_user.name }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ current_user.email or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="department" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="department" name="department" 
+                                   value="{{ department.name if department else 'Not assigned' }}" readonly>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="license_number" class="form-label">License Number</label>
+                            <input type="text" class="form-control" id="license_number" name="license_number" 
+                                   value="{{ doctor.license_number if doctor and doctor.license_number else 'Not assigned' }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="specialization" class="form-label">Specialization</label>
+                            <input type="text" class="form-control" id="specialization" name="specialization" 
+                                   value="{{ doctor.specialization if doctor else '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="experience" class="form-label">Experience (Years)</label>
+                            <input type="number" class="form-control" id="experience" name="experience" 
+                                   value="{{ doctor.experience if doctor else '' }}" min="0" max="50">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="gender" class="form-label">Gender</label>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="">Select Gender</option>
+                                <option value="Male" {{ 'selected' if doctor and doctor.gender == 'Male' }}>Male</option>
+                                <option value="Female" {{ 'selected' if doctor and doctor.gender == 'Female' }}>Female</option>
+                                <option value="Other" {{ 'selected' if doctor and doctor.gender == 'Other' }}>Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="consultation_fee" class="form-label">Consultation Fee ($)</label>
+                            <input type="number" class="form-control" id="consultation_fee" name="consultation_fee" 
+                                   value="{{ doctor.consultation_fee if doctor else 0 }}" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="qualification" class="form-label">Qualifications</label>
+                        <textarea class="form-control" id="qualification" name="qualification" rows="3">{{ doctor.qualification if doctor else '' }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ current_user.phone or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="max_appointments" class="form-label">Max Appointments/Day</label>
+                            <input type="number" class="form-control" id="max_appointments" name="max_appointments" 
+                                   value="{{ doctor.max_appointments_per_day if doctor else 20 }}" min="1" max="50">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Profile Summary</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="user-avatar mx-auto mb-3" style="width: 80px; height: 80px; font-size: 24px;">
+                    {{ current_user.name[3] if current_user.name.startswith('Dr.') else current_user.name[0] }}
+                </div>
+                <h5>{{ current_user.name }}</h5>
+                <p class="text-muted">{{ department.name if department else 'Department not assigned' }}</p>
+                
+                <hr>
+                
+                <div class="text-start">
+                    <p class="mb-2"><strong>License:</strong> {{ doctor.license_number if doctor and doctor.license_number else 'Not assigned' }}</p>
+                    <p class="mb-2"><strong>Experience:</strong> {{ doctor.experience if doctor and doctor.experience else 'Not specified' }} years</p>
+                    <p class="mb-2"><strong>Status:</strong> 
+                        <span class="badge bg-{{ 'success' if doctor and doctor.status == 'active' else 'warning' }}">
+                            {{ doctor.status|title if doctor else 'Unknown' }}
+                        </span>
+                    </p>
+                    <p class="mb-2"><strong>Joined:</strong> {{ doctor.created_at.strftime('%B %d, %Y') if doctor and doctor.created_at else 'Unknown' }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Quick Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary">0</h4>
+                        <small class="text-muted">Today's Appointments</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">0</h4>
+                        <small class="text-muted">Total Patients</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-info">0</h4>
+                        <small class="text-muted">Treatments</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">4.5</h4>
+                        <small class="text-muted">Rating</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/doctor/appointments" class="btn btn-outline-primary">
+                        <i class="fas fa-calendar-check me-2"></i>View Appointments
+                    </a>
+                    <a href="/doctor/availability" class="btn btn-outline-success">
+                        <i class="fas fa-calendar-alt me-2"></i>Set Availability
+                    </a>
+                    <a href="/doctor/patients" class="btn btn-outline-info">
+                        <i class="fas fa-users me-2"></i>My Patients
+                    </a>
+                    <a href="/doctor/treatments" class="btn btn-outline-warning">
+                        <i class="fas fa-prescription-bottle-alt me-2"></i>Treatments
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,117 @@
+erDiagram
+
+    USERS {
+        int id PK
+        string username UK "30 chars, indexed"
+        string password "255 chars, hashed"
+        string name "100 chars"
+        string role "20 chars: admin | doctor | patient, indexed"
+        boolean is_active "default true"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ADMIN {
+        int id PK
+        int uid FK "users.id, unique"
+    }
+
+    DEPARTMENT {
+        int id PK
+        string name UK "100 chars"
+        text description
+        datetime created_at
+    }
+
+    DOCTOR {
+        int id PK
+        int uid FK "users.id, unique"
+        int depid FK "department.id"
+        string license_number UK "50 chars, indexed"
+        string specialization "100 chars"
+        text qualification
+        int experience "years"
+        string gender "10 chars"
+        string status "20 chars, default active"
+        int admin_id FK "admin.id"
+    }
+
+    PATIENT {
+        int id PK
+        int uid FK "users.id, unique"
+        string gender "10 chars"
+        date dob "date of birth"
+        string blood_group "5 chars"
+        text address
+        boolean is_active "default true"
+        int admin_id FK "admin.id"
+    }
+
+    APPOINTMENT {
+        int id PK
+        string appointment_number UK "20 chars, indexed"
+        int patid FK "patient.id"
+        int docid FK "doctor.id"
+        date appoint_date
+        time appoint_time
+        string status "20 chars: Booked | Completed | Cancelled"
+        text reason_for_visit
+        int admin_id FK "admin.id"
+    }
+
+    TREATMENT {
+        int id PK
+        int appointid FK "appointment.id"
+        int docid FK "doctor.id"
+        int patid FK "patient.id"
+        text diagnosis
+        text treatment_plan
+        text prescription
+        text notes
+        date next_visit_date
+        datetime treatment_date "default now"
+    }
+
+    DOCTOR_AVAILABILITY {
+        int id PK
+        int docid FK "doctor.id"
+        date available_date
+        time start_time
+        time end_time
+        boolean available "default true"
+        text notes
+    }
+
+    MEDICAL_HISTORY {
+        int id PK
+        int patid FK "patient.id, unique"
+        text allergies
+        text chronic_conditions
+        text current_medications
+        text previous_surgeries
+        datetime created_at
+    }
+
+    %% ===============================
+    %% Relationships
+    %% ===============================
+
+    USERS ||--o| ADMIN : "uid"
+    USERS ||--o| DOCTOR : "uid"
+    USERS ||--o| PATIENT : "uid"
+
+    ADMIN ||--o{ DOCTOR : "manages"
+    ADMIN ||--o{ PATIENT : "manages"
+    ADMIN ||--o{ APPOINTMENT : "oversees"
+
+    DEPARTMENT ||--o{ DOCTOR : "depid"
+
+    DOCTOR ||--o{ APPOINTMENT : "docid"
+    DOCTOR ||--o{ DOCTOR_AVAILABILITY : "docid"
+    DOCTOR ||--o{ TREATMENT : "docid"
+
+    PATIENT ||--o{ APPOINTMENT : "patid"
+    PATIENT ||--o| MEDICAL_HISTORY : "patid"
+    PATIENT ||--o{ TREATMENT : "patid"
+
+    APPOINTMENT ||--o| TREATMENT : "appointid"

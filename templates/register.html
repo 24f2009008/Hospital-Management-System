@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register - HNM Hospital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --primary-light: #e8f2ff;
+            --gradient-start: #f5f7fa;
+            --gradient-end: #c3cfe2;
+        }
+        
+        body, html { 
+            height: 100%; 
+            margin: 0; 
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .split-screen { 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+        }
+        
+        .left-side { 
+            background: rgba(255,255,255,0.2); 
+            padding: 3rem; 
+            color: #333; 
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .left-content {
+            max-width: 600px;
+        }
+        
+        .left-side h1 { 
+            font-size: 3.2rem; 
+            font-weight: 800; 
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        
+        .left-side p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #555;
+        }
+        
+        .benefits-list {
+            margin-top: 2rem;
+        }
+        
+        .benefits-list li {
+            padding: 0.5rem 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .benefits-list i {
+            color: var(--primary-color);
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .register-card { 
+            max-width: 500px; 
+            width: 100%; 
+            padding: 2.5rem; 
+            border-radius: 1.2rem; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+            background: white;
+            transition: transform 0.3s ease;
+        }
+        
+        .register-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .form-control, .form-select {
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e1e5ee;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+        
+        .role-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .role-option {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            border: 2px solid #e1e5ee;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .role-option:hover {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+        
+        .role-option.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+        
+        .role-option input {
+            display: none;
+        }
+        
+        .role-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .extra-fields { 
+            display: none; 
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .form-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .form-section:last-of-type {
+            border-bottom: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+        }
+        
+        .alert {
+            border-radius: 0.75rem;
+            border: none;
+        }
+        
+        .progress-container {
+            margin-bottom: 2rem;
+        }
+        
+        .progress {
+            height: 6px;
+            border-radius: 3px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar {
+            background-color: var(--primary-color);
+            transition: width 0.5s ease;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+        
+        .step {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .step.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 992px) { 
+            .left-side { 
+                display: none; 
+            } 
+            
+            .register-card { 
+                margin: 2rem auto; 
+            } 
+        }
+        
+        @media (max-width: 576px) {
+            .register-card {
+                padding: 1.5rem;
+            }
+            
+            .role-selector {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid split-screen">
+    <div class="row w-100">
+
+        <!-- LEFT SIDE -->
+        <div class="col-lg-6 col-xl-7 left-side">
+            <div class="left-content">
+                <h1>Join <span class="text-primary">HNM Hospital</span> Today</h1>
+                <p>Register as a patient or doctor to access our comprehensive health portal and manage your healthcare needs.</p>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: Register Form -->
+        <div class="col-lg-6 col-xl-5 d-flex justify-content-center align-items-center p-4">
+            <div class="card register-card border-0">
+                <div class="card-body">
+                    <h3 class="text-center mb-4 fw-bold">Create Your Account</h3>
+                    
+                    <!-- Progress Indicator -->
+                    <div class="progress-container">
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: 33%;"></div>
+                        </div>
+                        <div class="step-indicator">
+                            <span class="step active">Basic Info</span>
+                            <span class="step">Role Details</span>
+                            <span class="step">Complete</span>
+                        </div>
+                    </div>
+
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>{{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+
+                    <form action="/register" method="POST" novalidate id="registerForm">
+                        <!-- Role Selection -->
+                        <div class="form-section">
+                            <label class="form-label fw-semibold">I am a</label>
+                            <div class="role-selector">
+                                <div class="role-option" data-role="Patient">
+                                    <div class="role-icon">
+                                        <i class="fas fa-user-injured"></i>
+                                    </div>
+                                    <div>Patient</div>
+                                    <input class="form-check-input" type="radio" name="role" id="role_patient" value="Patient" required
+                                           {% if role == 'Patient' %}checked{% endif %}>
+                                </div>
+                                <div class="role-option" data-role="Doctor">
+                                    <div class="role-icon">
+                                        <i class="fas fa-user-md"></i>
+                                    </div>
+                                    <div>Doctor</div>
+                                    <input class="form-check-input" type="radio" name="role" id="role_doctor" value="Doctor"
+                                           {% if role == 'Doctor' %}checked{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Common Fields -->
+                        <div class="form-section">
+                            <h5 class="mb-3 text-primary">Basic Information</h5>
+                            
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ name or '' }}" required placeholder="Enter your full name">
+                                </div>
+                                <div class="invalid-feedback">Please enter your name.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-at"></i></span>
+                                    <input type="text" class="form-control" id="username" name="username" value="{{ username or '' }}" required placeholder="Choose a username">
+                                </div>
+                                <div class="invalid-feedback">Please choose a username.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password" required placeholder="Create a strong password">
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Use 8+ characters with a mix of letters, numbers & symbols</div>
+                                <div class="invalid-feedback">Password is required.</div>
+                            </div>
+                        </div>
+
+                        <!-- PATIENT FIELDS -->
+                        <div id="patient-fields" class="extra-fields">
+                            <div class="form-section">
+                                <h5 class="mb-3 text-primary">Patient Details</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="gender_patient" class="form-label">Gender</label>
+                                        <select class="form-select" name="gender" id="gender_patient" required>
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="dob" class="form-label">Date of Birth</label>
+                                        <input type="date" class="form-control" name="dob" id="dob" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="bloodGrp" class="form-label">Blood Group</label>
+                                        <input type="text" class="form-control" name="bloodGrp" placeholder="e.g., O+" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Address</label>
+                                    <textarea class="form-control" name="address" rows="2" placeholder="Enter your complete address" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DOCTOR FIELDS -->
+                        <div id="doctor-fields" class="extra-fields">
+                            <div class="form-section">
+                                <h5 class="mb-3 text-primary">Professional Details</h5>
+                                <div class="mb-3">
+                                    <label for="department" class="form-label">Department</label>
+                                    <select class="form-select" name="department" id="department">
+                                        <option value="">Select Department</option>
+                                        {% for dept in departments %}
+                                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="gender_doctor" class="form-label">Gender</label>
+                                        <select class="form-select" name="gender" id="gender_doctor">
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="experience" class="form-label">Years of Experience</label>
+                                        <input type="number" class="form-control" name="experience" min="0" max="50" placeholder="e.g., 5">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="qualification" class="form-label">Qualification</label>
+                                    <input type="text" class="form-control" name="qualification" placeholder="e.g., MBBS, MD">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Create Account
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+                    <p class="text-center text-muted mb-0">
+                        Already have an account? <a href="/login" class="text-decoration-none fw-semibold">Sign In</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Role selection with visual feedback
+    document.querySelectorAll('.role-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const role = this.getAttribute('data-role');
+            
+            // Update visual selection
+            document.querySelectorAll('.role-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.classList.add('selected');
+            
+            // Update radio button
+            document.getElementById(`role_${role.toLowerCase()}`).checked = true;
+            
+            // Show/hide appropriate fields
+            document.getElementById('patient-fields').style.display = 
+                role === 'Patient' ? 'block' : 'none';
+            document.getElementById('doctor-fields').style.display = 
+                role === 'Doctor' ? 'block' : 'none';
+                
+            // Update progress bar
+            updateProgressBar();
+        });
+    });
+
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+
+    // Update progress bar based on form completion
+    function updateProgressBar() {
+        const progressBar = document.querySelector('.progress-bar');
+        const roleSelected = document.querySelector('input[name="role"]:checked');
+        const nameFilled = document.getElementById('name').value.trim() !== '';
+        const usernameFilled = document.getElementById('username').value.trim() !== '';
+        const passwordFilled = document.getElementById('password').value.trim() !== '';
+        
+        let progress = 0;
+        
+        if (roleSelected) progress += 33;
+        if (nameFilled) progress += 22;
+        if (usernameFilled) progress += 22;
+        if (passwordFilled) progress += 22;
+        
+        progressBar.style.width = `${Math.min(progress, 100)}%`;
+    }
+
+    // Add event listeners to update progress
+    document.getElementById('name').addEventListener('input', updateProgressBar);
+    document.getElementById('username').addEventListener('input', updateProgressBar);
+    document.getElementById('password').addEventListener('input', updateProgressBar);
+    
+    // Trigger on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set initial role selection
+        const checkedRole = document.querySelector('input[name="role"]:checked');
+        if (checkedRole) {
+            const roleOption = document.querySelector(`.role-option[data-role="${checkedRole.value}"]`);
+            if (roleOption) {
+                roleOption.classList.add('selected');
+                document.getElementById(`${checkedRole.value.toLowerCase()}-fields`).style.display = 'block';
+            }
+        }
+        
+        updateProgressBar();
+    });
+
+    // Bootstrap validation
+    (() => {
+        'use strict';
+        const form = document.getElementById('registerForm');
+        
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    })();
+</script>
+
+</body>
+</html>
