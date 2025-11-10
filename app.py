@@ -326,6 +326,7 @@ def main():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    logout_user()
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
@@ -335,7 +336,16 @@ def login():
             if user and check_password_hash(user.password, password):
                 login_user(user)
                 flash("Logged in successfully.", "success")
-                return redirect("/")
+                if user.role == "admin":
+                    return redirect("/dashboard")
+                elif user.role == "doctor":
+                    return redirect("/dashboard")
+                elif user.role == "patient":
+                    return redirect("/dashboard")
+                else:
+                    flash("Unknown user role.", "danger")
+                    logout_user()
+                    return redirect("/login") 
             else:
                 flash("Invalid username or password.", "danger")
         except Exception as e:
@@ -345,6 +355,74 @@ def login():
             session.close()
     return render_template("login.html")
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if current_user.is_authenticated:
+        logout_user()
+
+    session = SessionLocal()
+
+    try:
+        departments = session.query(Department).order_by(Department.name).all()
+
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+
+            if not all([name, username, password]):
+                flash("Please fill in all required fields.", "danger")
+                return render_template("register.html", departments=departments, role="patient")
+
+            existing_user = session.query(User).filter_by(username=username).first()
+            if existing_user:
+                flash("Username already exists. Please choose another one.", "danger")
+                return render_template("register.html", departments=departments, role="patient")
+
+            hashed_password = generate_password_hash(password)
+            user = User(
+                username=username,
+                password=hashed_password,
+                name=name,
+                role="patient",
+            )
+            session.add(user)
+            session.commit()
+
+            gender = request.form.get("gender")
+            dob = request.form.get("dob")
+            blood_group = request.form.get("bloodGrp")
+            address = request.form.get("address")
+
+            if not all([gender, dob, blood_group, address]):
+                flash("Please fill in all patient details.", "danger")
+                return render_template("register.html", departments=departments, role="patient")
+
+            new_patient = Patient(
+                uid=user.id,
+                gender=gender,
+                dob=datetime.strptime(dob, "%Y-%m-%d").date(),
+                blood_group=blood_group,
+                address=address,
+                is_active=True
+            )
+            session.add(new_patient)
+            session.commit()
+
+            flash("Patient account created successfully! You can now log in.", "success")
+            return redirect("/login")
+
+        return render_template("register.html", departments=departments, role="patient")
+
+    except Exception as e:
+        session.rollback()
+        print(f"[ERROR] Registration failed: {e}")
+        flash("An error occurred during registration. Please try again.", "danger")
+        return render_template("register.html", departments=[], role="patient")
+
+    finally:
+        session.close()
+
 
 @app.route("/logout")
 @login_required
@@ -352,6 +430,110 @@ def logout():
     logout_user()
     flash("Logged out.", "info")
     return redirect("/login")
+
+@app.route("/dashboard")
+@login_required
+def m_dash():
+    return f"Role: {current_user.role} | Username: {current_user.username}"
+
+            
+@app.route("/admin/dashboard")
+@login_required
+def admin_dashboard():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    return render_template("admin_dashboard.html")
+
+
+@app.route("/doctor/dashboard")
+@login_required
+def doctor_dashboard():
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    return render_template("doctor_dashboard.html")
+
+
+@app.route("/patient/dashboard")
+@login_required
+def patient_dashboard():
+    if current_user.role != "patient":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    return render_template("patient_dashboard.html")
+
+@app.route("/admin/addDoctor", methods=["GET", "POST"])
+@login_required
+def add_doctor():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        departments = session.query(Department).order_by(Department.name).all()
+
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "").strip()
+            gender = request.form.get("gender")
+            department_id = request.form.get("department")
+            license_number = request.form.get("license_number")
+            specialization = request.form.get("specialization")
+            qualification = request.form.get("qualification")
+            experience = request.form.get("experience")
+
+            # Validate inputs
+            if not all([name, username, password, gender, department_id, license_number, specialization, qualification]):
+                flash("Please fill in all required fields.", "danger")
+                return render_template("register.html", departments=departments)
+
+            # Check duplicates
+            existing_user = session.query(User).filter_by(username=username).first()
+            existing_license = session.query(Doctor).filter_by(license_number=license_number).first()
+            if existing_user:
+                flash("Username already exists.", "danger")
+                return render_template("register.html", departments=departments)
+            if existing_license:
+                flash("License number already registered.", "danger")
+                return render_template("register.html", departments=departments)
+
+            # Create user
+            hashed_password = generate_password_hash(password)
+            user = User(username=username, password=hashed_password, name=name, role="doctor")
+            session.add(user)
+            session.commit()
+
+            # Get the admin safely inside the same session
+            admin_record = session.query(Admin).filter_by(uid=current_user.id).first()
+
+            # Create doctor record
+            new_doctor = Doctor(
+                uid=user.id,
+                depid=int(department_id),
+                license_number=license_number,
+                specialization=specialization,
+                qualification=qualification,
+                experience=int(experience) if experience else 0,
+                gender=gender,
+                admin_id=admin_record.id if admin_record else None
+            )
+            session.add(new_doctor)
+            session.commit()
+
+            flash("Doctor added successfully!", "success")
+            return redirect("/admin/dashboard")
+
+        return render_template("register.html", departments=departments,role="doctor")
+    except Exception as e:
+        session.rollback()
+        print(f"[ERROR] Add Doctor failed: {e}")
+        flash("Error adding doctor. Please try again.", "danger")
+        return render_template("register.html", departments=[],role="doctor")
+    finally:
+        session.close()
 
 
 # --- Initialization ---
