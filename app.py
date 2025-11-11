@@ -306,7 +306,7 @@ def load_user(user_id):
 def inject_user():
     try:
         if current_user.is_authenticated and hasattr(current_user, "name"):
-            return dict(current_user=current_user)
+            return dict(current_user=current_user, now=datetime.now())
     except Exception as e:
         print(f"Context processor error: {e}")
 
@@ -315,7 +315,7 @@ def inject_user():
         name = "Guest"
         role = "guest"
 
-    return dict(current_user=SafeUser())
+    return dict(current_user=SafeUser(), now=datetime.now())
 
 
 
@@ -337,7 +337,7 @@ def login():
                 login_user(user)
                 flash("Logged in successfully.", "success")
                 if user.role == "admin":
-                    return redirect("/dashboard")
+                    return redirect("/admin/dashboard")
                 elif user.role == "doctor":
                     return redirect("/dashboard")
                 elif user.role == "patient":
@@ -443,7 +443,40 @@ def admin_dashboard():
     if current_user.role != "admin":
         flash("Access denied.", "danger")
         return redirect("/login")
-    return render_template("admin_dashboard.html")
+    
+    session = SessionLocal()
+    try:
+        # Get statistics
+        total_doctors = session.query(Doctor).count()
+        total_patients = session.query(Patient).count()
+        total_appointments = session.query(Appointment).count()
+        
+        # Get recent doctors (last 5)
+        doctors = session.query(Doctor).join(User).join(Department).order_by(Doctor.id.desc()).limit(5).all()
+        
+        # Get recent patients (last 5)
+        patients = session.query(Patient).join(User).order_by(Patient.id.desc()).limit(5).all()
+        
+        # Get recent appointments (last 10)
+        appointments = session.query(Appointment).join(Doctor).join(Patient).order_by(Appointment.appoint_date.desc(), Appointment.appoint_time.desc()).limit(10).all()
+        
+        # Get all departments
+        departments = session.query(Department).order_by(Department.name).all()
+        
+        return render_template("dashboard_admin.html",
+                             total_doctors=total_doctors,
+                             total_patients=total_patients,
+                             total_appointments=total_appointments,
+                             doctors=doctors,
+                             patients=patients,
+                             appointments=appointments,
+                             departments=departments)
+    except Exception as e:
+        print(f"[ERROR] Admin dashboard: {e}")
+        flash("Error loading dashboard.", "danger")
+        return redirect("/login")
+    finally:
+        session.close()
 
 
 @app.route("/doctor/dashboard")
@@ -488,14 +521,17 @@ def add_doctor():
             # Validate inputs
             if not all([name, username, password, gender, department_id, license_number, specialization, qualification]):
                 flash("Please fill in all required fields.", "danger")
-                return render_template("register.html", departments=departments)
+                return render_template("register.html", departments=departments,role="doctor")
 
             # Check duplicates
+            if qualification<0:
+                flash("Qualification cannot be negative", "danger")
+                return render_template("register.html", departments=departments,role="doctor")
             existing_user = session.query(User).filter_by(username=username).first()
             existing_license = session.query(Doctor).filter_by(license_number=license_number).first()
             if existing_user:
                 flash("Username already exists.", "danger")
-                return render_template("register.html", departments=departments)
+                return render_template("register.html", departments=departments,role="doctor")
             if existing_license:
                 flash("License number already registered.", "danger")
                 return render_template("register.html", departments=departments)
@@ -532,6 +568,458 @@ def add_doctor():
         print(f"[ERROR] Add Doctor failed: {e}")
         flash("Error adding doctor. Please try again.", "danger")
         return render_template("register.html", departments=[],role="doctor")
+    finally:
+        session.close()
+
+
+@app.route("/admin/doctors")
+@login_required
+def admin_doctors():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        doctors = session.query(Doctor).join(User).join(Department).order_by(Doctor.id.desc()).all()
+        departments = session.query(Department).order_by(Department.name).all()
+        return render_template("admin_doctors.html", doctors=doctors, departments=departments)
+    except Exception as e:
+        print(f"[ERROR] Admin doctors: {e}")
+        flash("Error loading doctors.", "danger")
+        return redirect("/admin/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/admin/doctor/update/<int:doctor_id>", methods=["POST"])
+@login_required
+def update_doctor(doctor_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(id=doctor_id).first()
+        if not doctor:
+            flash("Doctor not found.", "danger")
+            return redirect("/admin/doctors")
+        
+        # Update doctor details
+        doctor.specialization = request.form.get("specialization", doctor.specialization)
+        doctor.qualification = request.form.get("qualification", doctor.qualification)
+        doctor.experience = int(request.form.get("experience", doctor.experience))
+        doctor.depid = int(request.form.get("department", doctor.depid))
+        
+        # Update user name if provided
+        if request.form.get("name"):
+            doctor.user.name = request.form.get("name")
+        
+        session.commit()
+        flash("Doctor updated successfully!", "success")
+    except Exception as e:
+        session.rollback()
+        print(f"[ERROR] Update doctor: {e}")
+        flash("Error updating doctor.", "danger")
+    finally:
+        session.close()
+    
+    return redirect("/admin/doctors")
+
+
+@app.route("/admin/doctor/toggle/<int:doctor_id>/<string:update_status>", methods=["POST"])
+@login_required
+def toggle_doctor_status(doctor_id, update_status):
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(id=doctor_id).first()
+        if not doctor:
+            flash("Doctor not found.", "danger")
+            return redirect("/admin/doctors")
+
+        # Normalize the input
+        update_status = update_status.lower().strip()
+        valid_statuses = ["active", "inactive"]
+        if update_status not in valid_statuses:
+            flash("Invalid status value.", "danger")
+            return redirect("/admin/doctors")
+
+        if update_status == "inactive":
+            # Deactivate doctor
+            if doctor.status == "inactive":
+                flash(f"Doctor {doctor.user.name} is already inactive.", "warning")
+            else:
+                doctor.status = "inactive"
+                doctor.user.is_active = False
+                flash(f"Doctor {doctor.user.name} has been deactivated.", "warning")
+
+        elif update_status == "active":
+            # Activate doctor
+            if doctor.status == "active":
+                flash(f"Doctor {doctor.user.name} is already active.", "info")
+            else:
+                doctor.status = "active"
+                doctor.user.is_active = True
+                flash(f"Doctor {doctor.user.name} has been reactivated.", "success")
+
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(f"[ERROR] Toggle doctor status: {e}")
+        flash("Error updating doctor status.", "danger")
+    finally:
+        session.close()
+    
+    return redirect("/admin/doctors")
+
+
+
+@app.route("/admin/patients")
+@login_required
+def admin_patients():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        patients = session.query(Patient).join(User).order_by(Patient.id.desc()).all()
+        return render_template("admin_patients.html", patients=patients)
+    except Exception as e:
+        print(f"[ERROR] Admin patients: {e}")
+        flash("Error loading patients.", "danger")
+        return redirect("/admin/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/admin/patient/toggle/<int:patient_id>", methods=["POST"])
+@login_required
+def toggle_patient_status(patient_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        patient = session.query(Patient).filter_by(id=patient_id).first()
+        if not patient:
+            flash("Patient not found.", "danger")
+            return redirect("/admin/patients")
+        
+        # Toggle status
+        patient.is_active = not patient.is_active
+        patient.user.is_active = patient.is_active
+        
+        status_text = "activated" if patient.is_active else "deactivated"
+        flash(f"Patient {patient.user.name} has been {status_text}.", "success" if patient.is_active else "warning")
+        
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        print(f"[ERROR] Toggle patient status: {e}")
+        flash("Error updating patient status.", "danger")
+    finally:
+        session.close()
+    
+    return redirect("/admin/patients")
+
+
+@app.route("/admin/appointments")
+@login_required
+def admin_appointments():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        # Get filter parameters
+        filter_status = request.args.get("status", "all")
+        filter_date = request.args.get("date", "all")
+        
+        query = session.query(Appointment).join(Doctor).join(Patient)
+        
+        # Apply status filter
+        if filter_status != "all":
+            query = query.filter(Appointment.status == filter_status)
+        
+        # Apply date filter
+        today = date.today()
+        if filter_date == "upcoming":
+            query = query.filter(Appointment.appoint_date >= today)
+        elif filter_date == "past":
+            query = query.filter(Appointment.appoint_date < today)
+        
+        appointments = query.order_by(Appointment.appoint_date.desc(), Appointment.appoint_time.desc()).all()
+        
+        return render_template("admin_appointments.html", 
+                             appointments=appointments,
+                             filter_status=filter_status,
+                             filter_date=filter_date)
+    except Exception as e:
+        print(f"[ERROR] Admin appointments: {e}")
+        flash("Error loading appointments.", "danger")
+        return redirect("/admin/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/admin/search", methods=["GET"])
+@login_required
+def admin_search():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    return render_template("admin_search.html")
+
+
+@app.route("/admin/search/results", methods=["GET", "POST"])
+@login_required
+def admin_search_results():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        search_type = request.form.get("search_type") or request.args.get("search_type", "")
+        search_term = request.form.get("search_term") or request.args.get("search_term", "")
+        
+        results = []
+        
+        if search_type and search_term:
+            search_pattern = f"%{search_term}%"
+            
+            if search_type == "doctor":
+                doctors = session.query(Doctor).join(User).join(Department).filter(
+                    (User.name.ilike(search_pattern)) |
+                    (Doctor.specialization.ilike(search_pattern)) |
+                    (Department.name.ilike(search_pattern)) |
+                    (Doctor.license_number.ilike(search_pattern))
+                ).all()
+                
+                results = [{
+                    "id": d.id,
+                    "name": d.user.name,
+                    "specialization": d.specialization,
+                    "qualification": d.qualification,
+                    "experience": d.experience,
+                    "status": d.status,
+                    "department": d.department.name if d.department else "N/A"
+                } for d in doctors]
+                
+            elif search_type == "patient":
+                patients = session.query(Patient).join(User).filter(
+                    (User.name.ilike(search_pattern)) |
+                    (User.username.ilike(search_pattern)) |
+                    (Patient.blood_group.ilike(search_pattern))
+                ).all()
+                
+                results = [{
+                    "id": p.id,
+                    "patient_id": f"PAT{p.id:06d}",
+                    "name": p.user.name,
+                    "gender": p.gender,
+                    "blood_group": p.blood_group,
+                    "contact": p.user.username,
+                    "registered_date": p.user.created_at.strftime("%Y-%m-%d") if p.user.created_at else "N/A",
+                    "is_active": p.is_active
+                } for p in patients]
+                
+            elif search_type == "appointment":
+                appointments = session.query(Appointment).join(Doctor).join(Patient).filter(
+                    (Appointment.appointment_number.ilike(search_pattern)) |
+                    (User.name.ilike(search_pattern))
+                ).all()
+                
+                results = [{
+                    "id": a.id,
+                    "appointment_number": a.appointment_number,
+                    "patient_name": a.patient.user.name,
+                    "doctor_name": a.doctor.user.name,
+                    "date": a.appoint_date.strftime("%Y-%m-%d"),
+                    "time": a.appoint_time.strftime("%H:%M"),
+                    "status": a.status
+                } for a in appointments]
+        
+        return render_template("admin_search_results.html",
+                             results=results,
+                             search_type=search_type,
+                             search_term=search_term)
+    except Exception as e:
+        print(f"[ERROR] Admin search: {e}")
+        flash("Error performing search.", "danger")
+        return redirect("/admin/search")
+    finally:
+        session.close()
+
+
+@app.route("/admin/departments", methods=["GET"])
+@login_required
+def admin_departments():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        departments = session.query(Department).order_by(Department.name).all()
+        
+        # Get doctor count for each department
+        dept_stats = []
+        for dept in departments:
+            doctor_count = session.query(Doctor).filter_by(depid=dept.id).count()
+            dept_stats.append({
+                "id": dept.id,
+                "name": dept.name,
+                "description": dept.description,
+                "doctor_count": doctor_count,
+                "created_at": dept.created_at
+            })
+        
+        return render_template("admin_departments.html", departments=dept_stats)
+    except Exception as e:
+        print(f"[ERROR] Admin departments: {e}")
+        flash("Error loading departments.", "danger")
+        return redirect("/admin/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/admin/department/add", methods=["POST"])
+@login_required
+def add_department():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        
+        if not name:
+            flash("Department name is required.", "danger")
+            return redirect("/admin/departments")
+        
+        # Check if department already exists
+        existing = session.query(Department).filter_by(name=name).first()
+        if existing:
+            flash("Department already exists.", "danger")
+            return redirect("/admin/departments")
+        
+        new_dept = Department(name=name, description=description)
+        session.add(new_dept)
+        session.commit()
+        
+        flash(f"Department '{name}' added successfully!", "success")
+    except Exception as e:
+        session.rollback()
+        print(f"[ERROR] Add department: {e}")
+        flash("Error adding department.", "danger")
+    finally:
+        session.close()
+    
+    return redirect("/admin/departments")
+
+
+@app.route("/admin/department/update/<int:dept_id>", methods=["POST"])
+@login_required
+def update_department(dept_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        dept = session.query(Department).filter_by(id=dept_id).first()
+        if not dept:
+            flash("Department not found.", "danger")
+            return redirect("/admin/departments")
+        
+        name = request.form.get("name", "").strip()
+        description = request.form.get("description", "").strip()
+        
+        if name:
+            dept.name = name
+        if description:
+            dept.description = description
+        
+        session.commit()
+        flash("Department updated successfully!", "success")
+    except Exception as e:
+        session.rollback()
+        print(f"[ERROR] Update department: {e}")
+        flash("Error updating department.", "danger")
+    finally:
+        session.close()
+    
+    return redirect("/admin/departments")
+
+
+@app.route("/admin/reports", methods=["GET"])
+@login_required
+def admin_reports():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        # Get statistics
+        total_doctors = session.query(Doctor).count()
+        active_doctors = session.query(Doctor).filter_by(status="active").count()
+        inactive_doctors = total_doctors - active_doctors
+        
+        total_patients = session.query(Patient).count()
+        active_patients = session.query(Patient).filter_by(is_active=True).count()
+        inactive_patients = total_patients - active_patients
+        
+        total_appointments = session.query(Appointment).count()
+        booked_appointments = session.query(Appointment).filter_by(status="Booked").count()
+        completed_appointments = session.query(Appointment).filter_by(status="Completed").count()
+        cancelled_appointments = session.query(Appointment).filter_by(status="Cancelled").count()
+        
+        # Department statistics
+        departments = session.query(Department).all()
+        dept_stats = []
+        for dept in departments:
+            doctor_count = session.query(Doctor).filter_by(depid=dept.id).count()
+            dept_stats.append({
+                "name": dept.name,
+                "doctor_count": doctor_count
+            })
+        
+        # Recent activity
+        recent_doctors = session.query(Doctor).join(User).order_by(User.created_at.desc()).limit(5).all()
+        recent_patients = session.query(Patient).join(User).order_by(User.created_at.desc()).limit(5).all()
+        recent_appointments = session.query(Appointment).order_by(Appointment.id.desc()).limit(5).all()
+        
+        return render_template("admin_reports.html",
+                             total_doctors=total_doctors,
+                             active_doctors=active_doctors,
+                             inactive_doctors=inactive_doctors,
+                             total_patients=total_patients,
+                             active_patients=active_patients,
+                             inactive_patients=inactive_patients,
+                             total_appointments=total_appointments,
+                             booked_appointments=booked_appointments,
+                             completed_appointments=completed_appointments,
+                             cancelled_appointments=cancelled_appointments,
+                             dept_stats=dept_stats,
+                             recent_doctors=recent_doctors,
+                             recent_patients=recent_patients,
+                             recent_appointments=recent_appointments)
+    except Exception as e:
+        print(f"[ERROR] Admin reports: {e}")
+        flash("Error loading reports.", "danger")
+        return redirect("/admin/dashboard")
     finally:
         session.close()
 

@@ -1,0 +1,209 @@
+{% extends "admin_base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-calendar-check me-2" style="color: var(--primary-purple);"></i>
+                Manage Appointments
+            </h2>
+            <p class="text-muted mb-0">View and manage all appointments in the system</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Appointments</h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" action="/admin/appointments" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="all" {% if filter_status == 'all' %}selected{% endif %}>All Status</option>
+                        <option value="Booked" {% if filter_status == 'Booked' %}selected{% endif %}>Booked</option>
+                        <option value="Completed" {% if filter_status == 'Completed' %}selected{% endif %}>Completed</option>
+                        <option value="Cancelled" {% if filter_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Date Range</label>
+                    <select name="date" class="form-select" onchange="this.form.submit()">
+                        <option value="all" {% if filter_date == 'all' %}selected{% endif %}>All Dates</option>
+                        <option value="upcoming" {% if filter_date == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                        <option value="past" {% if filter_date == 'past' %}selected{% endif %}>Past</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <a href="/admin/appointments" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-redo me-2"></i>Reset Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Appointments Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>All Appointments</h5>
+                <span class="badge bg-white text-dark" style="font-size: 1rem; padding: 0.5rem 1rem;">{{ appointments|length }} Total</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if appointments %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-nowrap">Appointment #</th>
+                            <th class="text-nowrap">Patient</th>
+                            <th class="text-nowrap d-none d-xl-table-cell">Patient ID</th>
+                            <th class="text-nowrap d-none d-md-table-cell">Doctor</th>
+                            <th class="text-nowrap d-none d-lg-table-cell">Specialization</th>
+                            <th class="text-nowrap">Date</th>
+                            <th class="text-nowrap d-none d-lg-table-cell">Time</th>
+                            <th class="text-nowrap">Status</th>
+                            <th class="text-nowrap d-none d-xl-table-cell">Reason</th>
+                            <th class="text-nowrap">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td class="text-nowrap"><strong>{{ appointment.appointment_number or 'APT' + "%08d"|format(appointment.id) }}</strong></td>
+                            <td class="text-nowrap">{{ appointment.patient.user.name }}</td>
+                            <td class="text-nowrap d-none d-xl-table-cell">PAT{{ "%06d"|format(appointment.patient.id) }}</td>
+                            <td class="text-nowrap d-none d-md-table-cell">{{ appointment.doctor.user.name }}</td>
+                            <td class="d-none d-lg-table-cell">{{ appointment.doctor.specialization }}</td>
+                            <td class="text-nowrap">{{ appointment.appoint_date.strftime('%Y-%m-%d') }}</td>
+                            <td class="text-nowrap d-none d-lg-table-cell">{{ appointment.appoint_time.strftime('%H:%M') }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' if appointment.status == 'Booked' else 'danger' }}">
+                                    {{ appointment.status }}
+                                </span>
+                            </td>
+                            <td class="d-none d-xl-table-cell">
+                                <small>
+                                    {% if appointment.reason_for_visit %}
+                                        {{ appointment.reason_for_visit[:30] }}{% if appointment.reason_for_visit|length > 30 %}...{% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                <a href="#viewAppointment{{ appointment.id }}" class="btn btn-sm btn-outline-info" data-bs-toggle="collapse">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <!-- View Details Row (Collapsible) -->
+                        <tr class="collapse" id="viewAppointment{{ appointment.id }}">
+                            <td colspan="10" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 0;">
+                                <div class="p-4">
+                                    <h6 class="mb-3 fw-bold" style="color: var(--primary-purple);">
+                                        <i class="fas fa-info-circle me-2"></i>Appointment Details
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="text-muted">Patient Information</h6>
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <th width="40%">Patient Name:</th>
+                                                    <td>{{ appointment.patient.user.name }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Patient ID:</th>
+                                                    <td>PAT{{ "%06d"|format(appointment.patient.id) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Gender:</th>
+                                                    <td>{{ appointment.patient.gender }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Blood Group:</th>
+                                                    <td><span class="badge bg-danger">{{ appointment.patient.blood_group }}</span></td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-muted">Doctor Information</h6>
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <th width="40%">Doctor Name:</th>
+                                                    <td>{{ appointment.doctor.user.name }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Doctor ID:</th>
+                                                    <td>DR{{ "%03d"|format(appointment.doctor.id) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Specialization:</th>
+                                                    <td>{{ appointment.doctor.specialization }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Department:</th>
+                                                    <td>{{ appointment.doctor.department.name if appointment.doctor.department else 'N/A' }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <h6 class="text-muted">Appointment Information</h6>
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <th width="20%">Appointment Number:</th>
+                                                    <td>{{ appointment.appointment_number or 'APT' + "%08d"|format(appointment.id) }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Date & Time:</th>
+                                                    <td>{{ appointment.appoint_date.strftime('%Y-%m-%d') }} at {{ appointment.appoint_time.strftime('%H:%M') }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Status:</th>
+                                                    <td>
+                                                        <span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' if appointment.status == 'Booked' else 'danger' }}">
+                                                            {{ appointment.status }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Reason for Visit:</th>
+                                                    <td>{{ appointment.reason_for_visit or 'N/A' }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="#viewAppointment{{ appointment.id }}" class="btn btn-secondary btn-sm" data-bs-toggle="collapse">
+                                            Close
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-calendar-check fa-4x mb-3 opacity-25"></i>
+                <h5>No Appointments Found</h5>
+                <p>No appointments match your current filters.</p>
+                <a href="/admin/appointments" class="btn btn-primary mt-3">
+                    <i class="fas fa-redo me-2"></i>View All Appointments
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

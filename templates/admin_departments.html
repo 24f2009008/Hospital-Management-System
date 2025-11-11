@@ -1,0 +1,136 @@
+{% extends "admin_base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="mb-2 mb-md-0">
+                <h2 class="mb-1">
+                    <i class="fas fa-building me-2" style="color: var(--primary);"></i>
+                    Manage Departments
+                </h2>
+                <p class="mb-0">View and manage all hospital departments</p>
+            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                <i class="fas fa-plus me-2"></i><span class="d-none d-sm-inline">Add </span>Department
+            </button>
+        </div>
+    </div>
+
+    <!-- Departments Grid -->
+    <div class="row">
+        {% if departments %}
+            {% for dept in departments %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-2" style="color: var(--primary); font-weight: 700;">
+                                    {{ dept.name }}
+                                </h5>
+                                <p class="card-text text-muted small mb-3">
+                                    {{ dept.description or 'No description available' }}
+                                </p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#editDept{{ dept.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon me-3" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); width: 48px; height: 48px;">
+                                    <i class="fas fa-user-md text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="h4 mb-0 fw-bold" style="color: var(--primary);">{{ dept.doctor_count }}</div>
+                                    <small class="text-muted">Doctors</small>
+                                </div>
+                            </div>
+                            {% if dept.created_at %}
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ dept.created_at.strftime('%Y-%m-%d') }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Edit Form (Collapsible) -->
+                        <div class="collapse mt-3" id="editDept{{ dept.id }}">
+                            <hr>
+                            <form method="POST" action="/admin/department/update/{{ dept.id }}">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Department Name</label>
+                                    <input type="text" name="name" class="form-control" value="{{ dept.name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Description</label>
+                                    <textarea name="description" class="form-control" rows="3">{{ dept.description }}</textarea>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fas fa-save me-1"></i>Save
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#editDept{{ dept.id }}">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-building fa-4x text-muted mb-3" style="opacity: 0.3;"></i>
+                        <h5 class="text-muted">No Departments Found</h5>
+                        <p class="text-muted">Start by adding your first department.</p>
+                        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                            <i class="fas fa-plus me-2"></i>Add First Department
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <form method="POST" action="/admin/department/add">
+                <div class="modal-header" style="border-bottom: 1px solid var(--gray-200);">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-plus-circle me-2" style="color: var(--primary);"></i>
+                        Add New Department
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Department Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g., Cardiology" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="Brief description of the department..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--gray-200);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Department
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
