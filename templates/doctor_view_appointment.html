@@ -1,0 +1,62 @@
+{% extends "doctor_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm border-primary">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-notes-medical me-2"></i>Appointment Details
+            </h5>
+        </div>
+        <div class="card-body">
+            <h6 class="fw-bold mb-3 text-primary">Appointment Information</h6>
+            <table class="table table-bordered">
+                <tr><th>Appointment ID</th><td>#APT{{ "%03d" % appointment.id }}</td></tr>
+                <tr><th>Reason for Visit</th><td>{{ appointment.reason_for_visit }}</td></tr>
+                <tr><th>Status</th><td><span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' }}">{{ appointment.status }}</span></td></tr>
+                <tr><th>Date</th><td>{{ appointment.appoint_date }}</td></tr>
+                <tr><th>Time</th><td>{{ appointment.appoint_time }}</td></tr>
+            </table>
+
+            <h6 class="fw-bold mb-3 text-success mt-4">Patient Information</h6>
+            <table class="table table-bordered">
+                <tr><th>Name</th><td>{{ user.name if user else 'Unknown' }}</td></tr>
+                <tr><th>Gender</th><td>{{ patient.gender or '-' }}</td></tr>
+                <tr><th>Blood Group</th><td>{{ patient.blood_group or '-' }}</td></tr>
+                <tr><th>Address</th><td>{{ patient.address or '-' }}</td></tr>
+            </table>
+
+            <h6 class="fw-bold mb-3 text-info mt-4">Diagnosis & Treatment</h6>
+            {% if treatment %}
+            <table class="table table-bordered">
+                <tr><th>Diagnosis</th><td>{{ treatment.diagnosis }}</td></tr>
+                <tr><th>Treatment Plan</th><td>{{ treatment.treatment_plan }}</td></tr>
+                <tr><th>Prescription</th><td>{{ treatment.prescription }}</td></tr>
+                <tr><th>Notes</th><td>{{ treatment.notes }}</td></tr>
+                <tr><th>Next Visit Date</th><td>{{ treatment.next_visit_date or 'Not Scheduled' }}</td></tr>
+            </table>
+            {% else %}
+            <div class="alert alert-warning mb-0">
+                <i class="fas fa-info-circle me-2"></i>No diagnosis recorded yet for this appointment.
+                <a href="/doctor/diagnose/{{ appointment.id }}" class="btn btn-sm btn-outline-primary ms-2">
+                    <i class="fas fa-stethoscope"></i> Add Diagnosis
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="/doctor/appointments" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Appointments
+                </a>
+                <a href="/doctor/patient/history/{{ patient.id }}" class="btn btn-outline-info">
+                    <i class="fas fa-file-medical"></i> View Patient History
+                </a>
+                {% if treatment %}
+                <a href="/doctor/diagnose/{{ appointment.id }}" class="btn btn-outline-success">
+                    <i class="fas fa-edit"></i> Edit Diagnosis
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

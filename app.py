@@ -23,8 +23,11 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     Text,
+    func
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker, aliased
+from datetime import date, timedelta
+
 
 # --- SQLAlchemy setup ---
 engine = create_engine("sqlite:///hms.db", echo=True, future=True)
@@ -270,6 +273,25 @@ def create_standard_departments():
     finally:
         session.close()
 
+def mark_complete(appointment_id):
+    session = SessionLocal()
+    try:
+        appointment = session.query(Appointment).filter_by(id=appointment_id).first()
+        if not appointment:
+            flash("Appointment not found.", "warning")
+            return redirect("/doctor/appointments")
+
+        appointment.status = "Completed"
+        session.commit()
+        flash(f"Appointment #{appointment.appointment_number} marked as completed.", "success")
+        return redirect("/doctor/appointments")
+    except Exception as e:
+        print("[ERROR] doctor_mark_complete:", e)
+        flash("Error updating appointment.", "danger")
+        session.rollback()
+        return redirect("/doctor/appointments")
+    finally:
+        session.close()
 
 # --- Flask app setup ---
 app = Flask(__name__)
@@ -485,7 +507,76 @@ def doctor_dashboard():
     if current_user.role != "doctor":
         flash("Access denied.", "danger")
         return redirect("/login")
-    return render_template("doctor_dashboard.html")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        today = date.today()
+        next_week = today + timedelta(days=7)
+
+        todays_appointments = (
+            session.query(Appointment)
+            .filter(Appointment.docid == doctor.id, Appointment.appoint_date == today)
+            .count()
+        )
+
+        pending_consultations = (
+            session.query(Appointment)
+            .filter(Appointment.docid == doctor.id, Appointment.status == "Booked")
+            .count()
+        )
+
+        upcoming_appointments = (
+            session.query(Appointment)
+            .filter(Appointment.docid == doctor.id, Appointment.appoint_date.between(today, next_week))
+            .count()
+        )
+
+        assigned_patients = (
+            session.query(Patient)
+            .join(Appointment, Appointment.patid == Patient.id)
+            .filter(Appointment.docid == doctor.id)
+            .group_by(Patient.id)
+            .order_by(func.max(Appointment.appoint_date).desc())
+            .limit(5)
+            .all()
+        )
+
+        chart_start = today - timedelta(days=6)
+        daily_counts = (
+            session.query(Appointment.appoint_date, func.count(Appointment.id))
+            .filter(Appointment.docid == doctor.id, Appointment.appoint_date >= chart_start)
+            .group_by(Appointment.appoint_date)
+            .order_by(Appointment.appoint_date)
+            .all()
+        )
+
+        chart_data = {
+            "dates": [str(d[0]) for d in daily_counts],
+            "counts": [d[1] for d in daily_counts],
+        }
+
+        return render_template(
+            "dashboard_doctor.html",
+            todays_appointments=todays_appointments,
+            pending_consultations=pending_consultations,
+            upcoming_appointments=upcoming_appointments,
+            assigned_patients=assigned_patients,
+            chart_data=chart_data,
+        )
+
+    except Exception as e:
+        import traceback
+        print("[ERROR] Doctor dashboard:", e)
+        traceback.print_exc()
+        flash("Error loading dashboard.", "danger")
+        return redirect("/login")
+    finally:
+        session.close()
 
 
 @app.route("/patient/dashboard")
@@ -1020,6 +1111,639 @@ def admin_reports():
         print(f"[ERROR] Admin reports: {e}")
         flash("Error loading reports.", "danger")
         return redirect("/admin/dashboard")
+    finally:
+        session.close()
+
+@app.route("/doctor/appointments")
+@login_required
+def doctor_appointments():
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        today = date.today()
+        next_week = today + timedelta(days=7)
+
+        filter_option = request.args.get("filter", "all")
+
+        query = session.query(Appointment).join(Patient, Appointment.patid == Patient.id).filter(Appointment.docid == doctor.id)
+
+        if filter_option == "today":
+            query = query.filter(Appointment.appoint_date == today)
+        elif filter_option == "upcoming":
+            query = query.filter(Appointment.appoint_date.between(today, next_week))
+
+        appointments_query = query.order_by(Appointment.appoint_date.asc(), Appointment.appoint_time.asc()).all()
+
+
+        appointments = []
+        for appt in appointments_query:
+            patient = appt.patient
+            user = patient.user
+
+            age = 0
+            if patient.dob:
+                today_date = date.today()
+                age = today_date.year - patient.dob.year - (
+                    (today_date.month, today_date.day) < (patient.dob.month, patient.dob.day)
+                )
+
+            appointments.append({
+                "id": appt.id,
+                "appointment_number": appt.appointment_number,
+                "appointment_date": str(appt.appoint_date),
+                "appointment_time": str(appt.appoint_time),
+                "status": appt.status,
+                "reason": appt.reason_for_visit,
+                "patient_name": user.name if user else "Unknown",
+                "patient_gender": patient.gender or "-",
+                "patient_age": age,
+                "patient_blood_group": patient.blood_group or "-",
+                "patient_address": patient.address or "-",
+            })
+
+        total_appointments = len(appointments)
+        todays_appointments = sum(1 for a in appointments if a["appointment_date"] == str(today))
+        upcoming_appointments = sum(
+            1 for a in appointments
+            if str(today) <= a["appointment_date"] <= str(next_week) and a["status"] == "Booked"
+        )
+
+        return render_template(
+            "doctor_appointments.html",
+            appointments=appointments,
+            total_appointments=total_appointments,
+            todays_appointments=todays_appointments,
+            upcoming_appointments=upcoming_appointments,
+        )
+
+    except Exception as e:
+        print("[ERROR] doctor_appointments:", e)
+        flash("Error loading appointments.", "danger")
+        return redirect("/doctor/dashboard")  
+    finally:
+        session.close()
+
+
+@app.route("/doctor/appointment/view/<int:appointment_id>")
+@login_required
+def doctor_view_appointment(appointment_id):
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        appointment = (
+            session.query(Appointment)
+            .filter_by(id=appointment_id)
+            .first()
+        )
+
+        if not appointment:
+            flash("Appointment not found.", "danger")
+            return redirect("/doctor/appointments")
+
+        patient = session.query(Patient).filter_by(id=appointment.patid).first()
+        user = session.query(User).filter_by(id=patient.uid).first() if patient else None
+
+        treatment = session.query(Treatment).filter_by(appointid=appointment.id).first()
+
+        return render_template(
+            "doctor_view_appointment.html",
+            appointment=appointment,
+            patient=patient,
+            user=user,
+            treatment=treatment,
+        )
+
+    except Exception as e:
+        print("[ERROR] doctor_view_appointment:", e)
+        flash("Error loading appointment details.", "danger")
+        return redirect("/doctor/appointments")
+    finally:
+        session.close()
+
+
+
+@app.route("/doctor/mark/complete/<int:appointment_id>")
+@login_required
+def doctor_mark_complete(appointment_id):
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    mark_complete(appointment_id)
+
+
+@app.route("/doctor/mark/cancel/<int:appointment_id>")
+@login_required
+def doctor_mark_cancel(appointment_id):
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    session = SessionLocal()
+    try:
+        appointment = session.query(Appointment).filter_by(id=appointment_id).first()
+        if not appointment:
+            flash("Appointment not found.", "warning")
+            return redirect("/doctor/appointments")
+
+        appointment.status = "Cancelled"
+        session.commit()
+        flash(f"Appointment #{appointment.appointment_number} has been cancelled.", "danger")
+        return redirect("/doctor/appointments")
+    except Exception as e:
+        print("[ERROR] doctor_mark_cancel:", e)
+        flash("Error cancelling appointment.", "danger")
+        session.rollback()
+        return redirect("/doctor/appointments")
+    finally:
+        session.close()
+
+@app.route("/doctor/diagnose/<int:appointment_id>", methods=["GET", "POST"])
+@login_required
+def doctor_diagnose(appointment_id):
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        appointment = session.query(Appointment).filter_by(id=appointment_id).first()
+        if not appointment:
+            flash("Appointment not found.", "danger")
+            return redirect("/doctor/appointments")
+
+        # Get patient information
+        patient = session.query(Patient).filter_by(id=appointment.patid).first()
+
+        # Fetch existing diagnosis if available
+        treatment = session.query(Treatment).filter_by(appointid=appointment.id).first()
+
+        # Get medical history
+        medical_history = session.query(MedicalHistory).filter_by(patid=appointment.patid).first()
+
+        if request.method == "POST":
+            diagnosis = request.form.get("diagnosis")
+            treatment_plan = request.form.get("treatment_plan")
+            prescription = request.form.get("prescription")
+            notes = request.form.get("notes")
+            next_visit_str = request.form.get("next_visit_date")
+
+            next_visit_date = None
+            if next_visit_str:
+                try:
+                    next_visit_date = datetime.strptime(next_visit_str, "%Y-%m-%d").date()
+                except ValueError:
+                    flash("Invalid date format.", "warning")
+
+            try:
+                if treatment:
+                    # Update existing record
+                    treatment.diagnosis = diagnosis
+                    treatment.treatment_plan = treatment_plan
+                    treatment.prescription = prescription
+                    treatment.notes = notes
+                    treatment.next_visit_date = next_visit_date
+                else:
+                    # Create new record
+                    treatment = Treatment(
+                        appointid=appointment.id,
+                        docid=appointment.docid,
+                        patid=appointment.patid,
+                        diagnosis=diagnosis,
+                        treatment_plan=treatment_plan,
+                        prescription=prescription,
+                        notes=notes,
+                        next_visit_date=next_visit_date,
+                    )
+                    session.add(treatment)
+
+                # Update or create medical history
+                if medical_history:
+                    # Append to existing chronic conditions
+                    if medical_history.chronic_conditions:
+                        medical_history.chronic_conditions += f"\n[{datetime.now().strftime('%Y-%m-%d')}] {diagnosis}"
+                    else:
+                        medical_history.chronic_conditions = f"[{datetime.now().strftime('%Y-%m-%d')}] {diagnosis}"
+                    
+                    # Update current medications if prescription exists
+                    if prescription:
+                        if medical_history.current_medications:
+                            medical_history.current_medications += f"\n[{datetime.now().strftime('%Y-%m-%d')}] {prescription}"
+                        else:
+                            medical_history.current_medications = f"[{datetime.now().strftime('%Y-%m-%d')}] {prescription}"
+                else:
+                    # Create new medical history
+                    medical_history = MedicalHistory(
+                        patid=appointment.patid,
+                        chronic_conditions=f"[{datetime.now().strftime('%Y-%m-%d')}] {diagnosis}",
+                        current_medications=f"[{datetime.now().strftime('%Y-%m-%d')}] {prescription}" if prescription else None,
+                    )
+                    session.add(medical_history)
+
+                appointment.status = "Completed"
+                session.commit()
+                flash("Diagnosis saved and medical history updated successfully!", "success")
+                return redirect("/doctor/appointment/view/{}".format(appointment.id))
+
+            except Exception as e:
+                session.rollback()
+                print("[ERROR] doctor_diagnose (POST):", e)
+                flash("Error saving treatment details.", "danger")
+
+        return render_template(
+            "doctor_diagnose.html",
+            appointment=appointment,
+            patient=patient,
+            treatment=treatment,
+            medical_history=medical_history,
+        )
+
+    except Exception as e:
+        print("[ERROR] doctor_diagnose:", e)
+        flash("Error loading diagnosis page.", "danger")
+        return redirect("/doctor/appointments")
+    finally:
+        session.close()
+
+
+@app.route("/doctor/patients")
+@login_required
+def doctor_patients():
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        # Get all unique patients who have appointments with this doctor
+        patients_query = (
+            session.query(Patient)
+            .join(Appointment, Appointment.patid == Patient.id)
+            .filter(Appointment.docid == doctor.id)
+            .group_by(Patient.id)
+            .all()
+        )
+
+        patients = []
+        for patient in patients_query:
+            # Calculate age
+            age = calculate_age(patient.dob)
+            
+            # Get appointment count
+            appointment_count = (
+                session.query(Appointment)
+                .filter(Appointment.patid == patient.id, Appointment.docid == doctor.id)
+                .count()
+            )
+            
+            # Get last visit
+            last_visit = (
+                session.query(Appointment.appoint_date)
+                .filter(Appointment.patid == patient.id, Appointment.docid == doctor.id)
+                .order_by(Appointment.appoint_date.desc())
+                .first()
+            )
+
+            patients.append({
+                "id": patient.id,
+                "name": patient.user.name,
+                "gender": patient.gender,
+                "age": age,
+                "blood_group": patient.blood_group,
+                "address": patient.address,
+                "appointment_count": appointment_count,
+                "last_visit": last_visit,
+            })
+
+        return render_template("doctor_patients.html", patients=patients)
+
+    except Exception as e:
+        print("[ERROR] doctor_patients:", e)
+        flash("Error loading patients.", "danger")
+        return redirect("/doctor/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/doctor/availability", methods=["GET", "POST"])
+@login_required
+def doctor_availability():
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        if request.method == "POST":
+            # Process availability updates for next 7 days
+            today = date.today()
+            
+            for day_index in range(7):
+                current_date = today + timedelta(days=day_index)
+                available = request.form.get(f"available_{day_index}") == "on"
+                start_time_str = request.form.get(f"start_time_{day_index}")
+                end_time_str = request.form.get(f"end_time_{day_index}")
+                
+                # Check if availability record exists
+                availability = (
+                    session.query(DoctorAvailability)
+                    .filter_by(docid=doctor.id, available_date=current_date)
+                    .first()
+                )
+                
+                if available and start_time_str and end_time_str:
+                    from datetime import datetime
+                    start_time = datetime.strptime(start_time_str, "%H:%M").time()
+                    end_time = datetime.strptime(end_time_str, "%H:%M").time()
+                    
+                    if availability:
+                        # Update existing
+                        availability.available = True
+                        availability.start_time = start_time
+                        availability.end_time = end_time
+                    else:
+                        # Create new
+                        availability = DoctorAvailability(
+                            docid=doctor.id,
+                            available_date=current_date,
+                            start_time=start_time,
+                            end_time=end_time,
+                            available=True,
+                        )
+                        session.add(availability)
+                else:
+                    # Mark as unavailable
+                    if availability:
+                        availability.available = False
+            
+            session.commit()
+            flash("Availability updated successfully!", "success")
+            return redirect("/doctor/availability")
+
+        # GET request - show availability form
+        today = date.today()
+        availability_data = {}
+        
+        for day_index in range(7):
+            current_date = today + timedelta(days=day_index)
+            day_name = current_date.strftime("%A")
+            
+            availability = (
+                session.query(DoctorAvailability)
+                .filter_by(docid=doctor.id, available_date=current_date)
+                .first()
+            )
+            
+            availability_data[day_index] = {
+                "date": current_date,
+                "day_name": day_name,
+                "availability": {
+                    "available": availability.available if availability else False,
+                    "startTime": availability.start_time if availability else None,
+                    "endTime": availability.end_time if availability else None,
+                    "max_appointments": 10,
+                } if availability else None,
+            }
+
+        return render_template("doctor_availability.html", availability_data=availability_data)
+
+    except Exception as e:
+        print("[ERROR] doctor_availability:", e)
+        flash("Error loading availability.", "danger")
+        return redirect("/doctor/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/doctor/treatments")
+@login_required
+def doctor_treatments():
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        # Get all treatments by this doctor
+        treatments_query = (
+            session.query(Treatment)
+            .join(Appointment, Treatment.appointid == Appointment.id)
+            .join(Patient, Treatment.patid == Patient.id)
+            .filter(Treatment.docid == doctor.id)
+            .order_by(Treatment.treatment_date.desc())
+            .all()
+        )
+
+        treatments = []
+        for treatment in treatments_query:
+            treatments.append({
+                "id": treatment.id,
+                "patient_name": treatment.patient.user.name,
+                "diagnosis": treatment.diagnosis,
+                "treatment_plan": treatment.treatment_plan,
+                "prescription": treatment.prescription,
+                "notes": treatment.notes,
+                "treatment_date": treatment.treatment_date,
+                "appointment_date": treatment.appointment.appoint_date if treatment.appointment else None,
+                "next_visit_date": treatment.next_visit_date,
+            })
+
+        return render_template("doctor_treatment.html", treatments=treatments)
+
+    except Exception as e:
+        print("[ERROR] doctor_treatments:", e)
+        flash("Error loading treatments.", "danger")
+        return redirect("/doctor/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/doctor/patient/history/<int:patient_id>")
+@login_required
+def doctor_patient_history(patient_id):
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        # Get patient information
+        patient = session.query(Patient).filter_by(id=patient_id).first()
+        if not patient:
+            flash("Patient not found.", "danger")
+            return redirect("/doctor/patients")
+
+        # Get medical history
+        medical_history = session.query(MedicalHistory).filter_by(patid=patient_id).first()
+
+        # Get all treatments for this patient by this doctor
+        treatments = (
+            session.query(Treatment)
+            .join(Appointment, Treatment.appointid == Appointment.id)
+            .filter(Treatment.patid == patient_id, Treatment.docid == doctor.id)
+            .order_by(Treatment.treatment_date.desc())
+            .all()
+        )
+
+        # Get all appointments
+        appointments = (
+            session.query(Appointment)
+            .filter(Appointment.patid == patient_id, Appointment.docid == doctor.id)
+            .order_by(Appointment.appoint_date.desc())
+            .all()
+        )
+
+        # Calculate age
+        age = calculate_age(patient.dob)
+
+        return render_template(
+            "doctor_patient_history.html",
+            patient=patient,
+            age=age,
+            medical_history=medical_history,
+            treatments=treatments,
+            appointments=appointments,
+        )
+
+    except Exception as e:
+        print("[ERROR] doctor_patient_history:", e)
+        flash("Error loading patient history.", "danger")
+        return redirect("/doctor/patients")
+    finally:
+        session.close()
+
+
+@app.route("/doctor/profile", methods=["GET"])
+@login_required
+def doctor_profile():
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        # Get department
+        department = session.query(Department).filter_by(id=doctor.depid).first() if doctor.depid else None
+
+        # Get statistics
+        total_appointments = (
+            session.query(Appointment)
+            .filter(Appointment.docid == doctor.id)
+            .count()
+        )
+        
+        completed_appointments = (
+            session.query(Appointment)
+            .filter(Appointment.docid == doctor.id, Appointment.status == "Completed")
+            .count()
+        )
+        
+        total_patients = (
+            session.query(Patient)
+            .join(Appointment, Appointment.patid == Patient.id)
+            .filter(Appointment.docid == doctor.id)
+            .group_by(Patient.id)
+            .count()
+        )
+
+        return render_template(
+            "doctor_profile.html",
+            doctor=doctor,
+            department=department,
+            total_appointments=total_appointments,
+            completed_appointments=completed_appointments,
+            total_patients=total_patients,
+        )
+
+    except Exception as e:
+        print("[ERROR] doctor_profile:", e)
+        flash("Error loading profile.", "danger")
+        return redirect("/doctor/dashboard")
+    finally:
+        session.close()
+
+
+@app.route("/doctor/profile/update", methods=["POST"])
+@login_required
+def doctor_profile_update():
+    if current_user.role != "doctor":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+
+    session = SessionLocal()
+    try:
+        doctor = session.query(Doctor).filter_by(uid=current_user.id).first()
+        if not doctor:
+            flash("Doctor profile not found.", "danger")
+            return redirect("/login")
+
+        # Update profile information
+        name = request.form.get("name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        specialization = request.form.get("specialization")
+        qualification = request.form.get("qualification")
+        experience = request.form.get("experience")
+        gender = request.form.get("gender")
+        
+        # Update user information
+        user = session.query(User).filter_by(id=current_user.id).first()
+        if user and name:
+            user.name = name
+        
+        # Update doctor information
+        if specialization:
+            doctor.specialization = specialization
+        if qualification:
+            doctor.qualification = qualification
+        if experience:
+            doctor.experience = int(experience)
+        if gender:
+            doctor.gender = gender
+        
+        session.commit()
+        flash("Profile updated successfully!", "success")
+        return redirect("/doctor/profile")
+
+    except Exception as e:
+        session.rollback()
+        print("[ERROR] doctor_profile_update:", e)
+        flash("Error updating profile.", "danger")
+        return redirect("/doctor/profile")
     finally:
         session.close()
 

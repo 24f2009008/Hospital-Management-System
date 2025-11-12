@@ -7,14 +7,14 @@
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <h2 class="mb-1">
-                    <i class="fas fa-tachometer-alt me-2" style="color: var(--primary-purple);"></i>
+                    <i class="fas fa-tachometer-alt me-2" style="color: var(--primary);"></i>
                     Admin Dashboard
                 </h2>
-                <p class="text-muted mb-0">Welcome back, <strong>{{ current_user.name }}</strong>! Here's your hospital overview.</p>
+                <p class="mb-0">Welcome back, <strong>{{ current_user.name }}</strong>! Here's your hospital overview.</p>
             </div>
             <div class="text-end">
                 <small class="text-muted d-block">Last Login</small>
-                <strong style="color: var(--primary-purple);">{{ now.strftime('%b %d, %Y %H:%M') }}</strong>
+                <strong style="color: var(--primary);">{{ now.strftime('%b %d, %Y %H:%M') }}</strong>
             </div>
         </div>
     </div>
@@ -22,18 +22,18 @@
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-4 mb-3">
-            <div class="stat-card" style="border-left: 5px solid #8e44ad;">
+            <div class="stat-card">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-2 text-uppercase" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">Total Doctors</p>
-                            <h2 class="mb-0 fw-bold" style="color: #8e44ad; font-size: 2.5rem;">{{ total_doctors }}</h2>
+                            <h2 class="mb-0 fw-bold" style="color: var(--primary); font-size: 2.5rem;">{{ total_doctors }}</h2>
                             <small class="text-muted">
-                                <i class="fas fa-arrow-up text-success me-1"></i>
+                                <i class="fas fa-user-md me-1"></i>
                                 Active in system
                             </small>
                         </div>
-                        <div class="stat-icon" style="width: 70px; height: 70px; background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%); border-radius: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3);">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);">
                             <i class="fas fa-user-md fa-2x text-white"></i>
                         </div>
                     </div>
@@ -42,18 +42,18 @@
         </div>
         
         <div class="col-md-4 mb-3">
-            <div class="stat-card" style="border-left: 5px solid #198754;">
+            <div class="stat-card">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-2 text-uppercase" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">Total Patients</p>
-                            <h2 class="mb-0 fw-bold" style="color: #198754; font-size: 2.5rem;">{{ total_patients }}</h2>
+                            <h2 class="mb-0 fw-bold" style="color: var(--success); font-size: 2.5rem;">{{ total_patients }}</h2>
                             <small class="text-muted">
-                                <i class="fas fa-arrow-up text-success me-1"></i>
+                                <i class="fas fa-procedures me-1"></i>
                                 Registered
                             </small>
                         </div>
-                        <div class="stat-icon" style="width: 70px; height: 70px; background: linear-gradient(135deg, #198754 0%, #20c997 100%); border-radius: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, var(--success) 0%, #059669 100%);">
                             <i class="fas fa-procedures fa-2x text-white"></i>
                         </div>
                     </div>
@@ -62,18 +62,18 @@
         </div>
         
         <div class="col-md-4 mb-3">
-            <div class="stat-card" style="border-left: 5px solid #0dcaf0;">
+            <div class="stat-card">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted mb-2 text-uppercase" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">Total Appointments</p>
-                            <h2 class="mb-0 fw-bold" style="color: #0dcaf0; font-size: 2.5rem;">{{ total_appointments }}</h2>
+                            <h2 class="mb-0 fw-bold" style="color: var(--info); font-size: 2.5rem;">{{ total_appointments }}</h2>
                             <small class="text-muted">
-                                <i class="fas fa-calendar text-info me-1"></i>
+                                <i class="fas fa-calendar-check me-1"></i>
                                 All time
                             </small>
                         </div>
-                        <div class="stat-icon" style="width: 70px; height: 70px; background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%); border-radius: 1rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(13, 202, 240, 0.3);">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, var(--info) 0%, #2563eb 100%);">
                             <i class="fas fa-calendar-check fa-2x text-white"></i>
                         </div>
                     </div>
@@ -135,22 +135,22 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Specialization</th>
-                                    <th>Department</th>
-                                    <th>Experience</th>
-                                    <th>Status</th>
+                                    <th class="text-nowrap">ID</th>
+                                    <th class="text-nowrap">Name</th>
+                                    <th class="text-nowrap d-none d-md-table-cell">Specialization</th>
+                                    <th class="text-nowrap d-none d-lg-table-cell">Department</th>
+                                    <th class="text-nowrap d-none d-lg-table-cell">Experience</th>
+                                    <th class="text-nowrap">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for doctor in doctors %}
                                 <tr>
-                                    <td><strong>DR{{ "%03d"|format(doctor.id) }}</strong></td>
-                                    <td>{{ doctor.user.name }}</td>
-                                    <td>{{ doctor.specialization }}</td>
-                                    <td>{{ doctor.department.name if doctor.department else 'N/A' }}</td>
-                                    <td>{{ doctor.experience }} years</td>
+                                    <td class="text-nowrap"><strong>DR{{ "%03d"|format(doctor.id) }}</strong></td>
+                                    <td class="text-nowrap">{{ doctor.user.name }}</td>
+                                    <td class="d-none d-md-table-cell">{{ doctor.specialization }}</td>
+                                    <td class="d-none d-lg-table-cell">{{ doctor.department.name if doctor.department else 'N/A' }}</td>
+                                    <td class="d-none d-lg-table-cell">{{ doctor.experience }} years</td>
                                     <td>
                                         <span class="badge bg-{{ 'success' if doctor.status == 'active' else 'secondary' }}">
                                             {{ doctor.status|title }}
@@ -162,10 +162,11 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-user-md fa-3x mb-3 opacity-25"></i>
-                        <p>No doctors registered yet.</p>
-                        <a href="/admin/addDoctor" class="btn btn-primary">Add First Doctor</a>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-user-md fa-4x mb-3" style="opacity: 0.3;"></i>
+                        <h5 class="text-muted">No Doctors Yet</h5>
+                        <p class="text-muted">Start by adding your first doctor to the system.</p>
+                        <a href="/admin/addDoctor" class="btn btn-primary mt-3">Add First Doctor</a>
                     </div>
                     {% endif %}
                 </div>
@@ -220,60 +221,10 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-procedures fa-3x mb-3 opacity-25"></i>
-                        <p>No patients registered yet.</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Appointments -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Recent Appointments</h5>
-                    <a href="/admin/appointments" class="btn btn-sm btn-outline-info">View All</a>
-                </div>
-                <div class="card-body">
-                    {% if appointments %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-nowrap">Appointment #</th>
-                                    <th class="text-nowrap">Patient</th>
-                                    <th class="text-nowrap d-none d-md-table-cell">Doctor</th>
-                                    <th class="text-nowrap d-none d-lg-table-cell">Date</th>
-                                    <th class="text-nowrap d-none d-lg-table-cell">Time</th>
-                                    <th class="text-nowrap">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for appointment in appointments %}
-                                <tr>
-                                    <td class="text-nowrap"><strong>{{ appointment.appointment_number or 'APT' + "%08d"|format(appointment.id) }}</strong></td>
-                                    <td class="text-nowrap">{{ appointment.patient.user.name }}</td>
-                                    <td class="text-nowrap d-none d-md-table-cell">{{ appointment.doctor.user.name }}</td>
-                                    <td class="d-none d-lg-table-cell">{{ appointment.appoint_date.strftime('%Y-%m-%d') }}</td>
-                                    <td class="d-none d-lg-table-cell">{{ appointment.appoint_time.strftime('%H:%M') }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' if appointment.status == 'Booked' else 'danger' }}">
-                                            {{ appointment.status }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-calendar-check fa-3x mb-3 opacity-25"></i>
-                        <p>No appointments scheduled yet.</p>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-procedures fa-4x mb-3" style="opacity: 0.3;"></i>
+                        <h5 class="text-muted">No Patients Yet</h5>
+                        <p class="text-muted">No patients have registered yet.</p>
                     </div>
                     {% endif %}
                 </div>

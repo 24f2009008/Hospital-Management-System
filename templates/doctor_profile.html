@@ -65,17 +65,13 @@
                                 <option value="Other" {{ 'selected' if doctor and doctor.gender == 'Other' }}>Other</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="consultation_fee" class="form-label">Consultation Fee ($)</label>
-                            <input type="number" class="form-control" id="consultation_fee" name="consultation_fee" 
-                                   value="{{ doctor.consultation_fee if doctor else 0 }}" min="0">
+                        <div class="mb-3">
+                            <label for="qualification" class="form-label">Qualifications</label>
+                            <textarea class="form-control" id="qualification" name="qualification" rows="3">{{ doctor.qualification if doctor else '' }}</textarea>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="qualification" class="form-label">Qualifications</label>
-                        <textarea class="form-control" id="qualification" name="qualification" rows="3">{{ doctor.qualification if doctor else '' }}</textarea>
-                    </div>
+                    
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -101,7 +97,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-header">
                 <h6 class="card-title mb-0">Profile Summary</h6>
             </div>
@@ -122,58 +118,29 @@
                             {{ doctor.status|title if doctor else 'Unknown' }}
                         </span>
                     </p>
-                    <p class="mb-2"><strong>Joined:</strong> {{ doctor.created_at.strftime('%B %d, %Y') if doctor and doctor.created_at else 'Unknown' }}</p>
                 </div>
             </div>
         </div>
         
-        <div class="card mt-3">
+        <!-- Statistics Card -->
+        <div class="card">
             <div class="card-header">
-                <h6 class="card-title mb-0">Quick Statistics</h6>
+                <h6 class="card-title mb-0">Statistics</h6>
             </div>
             <div class="card-body">
                 <div class="row text-center">
-                    <div class="col-6">
-                        <h4 class="text-primary">0</h4>
-                        <small class="text-muted">Today's Appointments</small>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-primary">{{ total_appointments }}</h4>
+                        <small class="text-muted">Total Appointments</small>
                     </div>
-                    <div class="col-6">
-                        <h4 class="text-success">0</h4>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-success">{{ completed_appointments }}</h4>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                    <div class="col-12">
+                        <h4 class="text-info">{{ total_patients }}</h4>
                         <small class="text-muted">Total Patients</small>
                     </div>
-                </div>
-                <hr>
-                <div class="row text-center">
-                    <div class="col-6">
-                        <h4 class="text-info">0</h4>
-                        <small class="text-muted">Treatments</small>
-                    </div>
-                    <div class="col-6">
-                        <h4 class="text-warning">4.5</h4>
-                        <small class="text-muted">Rating</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="card-title mb-0">Quick Actions</h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/doctor/appointments" class="btn btn-outline-primary">
-                        <i class="fas fa-calendar-check me-2"></i>View Appointments
-                    </a>
-                    <a href="/doctor/availability" class="btn btn-outline-success">
-                        <i class="fas fa-calendar-alt me-2"></i>Set Availability
-                    </a>
-                    <a href="/doctor/patients" class="btn btn-outline-info">
-                        <i class="fas fa-users me-2"></i>My Patients
-                    </a>
-                    <a href="/doctor/treatments" class="btn btn-outline-warning">
-                        <i class="fas fa-prescription-bottle-alt me-2"></i>Treatments
-                    </a>
                 </div>
             </div>
         </div>

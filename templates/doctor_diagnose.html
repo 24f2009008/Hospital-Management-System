@@ -1,0 +1,75 @@
+{% extends "doctor_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm border-success">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-stethoscope me-2"></i>Diagnosis for Appointment #{{ appointment.id }}</h5>
+        </div>
+
+        <div class="card-body">
+            <p class="text-muted mb-4">
+                <strong>Patient:</strong> {{ patient.user.name if patient else 'Unknown' }}<br>
+                <strong>Reason:</strong> {{ appointment.reason_for_visit }}<br>
+                <strong>Status:</strong> {{ appointment.status }}
+            </p>
+
+            {% if medical_history %}
+            <div class="alert alert-info">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Patient Medical History</h6>
+                {% if medical_history.allergies %}
+                <p class="mb-1"><strong>Allergies:</strong> {{ medical_history.allergies }}</p>
+                {% endif %}
+                {% if medical_history.chronic_conditions %}
+                <p class="mb-1"><strong>Chronic Conditions:</strong> {{ medical_history.chronic_conditions }}</p>
+                {% endif %}
+                {% if medical_history.current_medications %}
+                <p class="mb-1"><strong>Current Medications:</strong> {{ medical_history.current_medications }}</p>
+                {% endif %}
+                {% if medical_history.previous_surgeries %}
+                <p class="mb-0"><strong>Previous Surgeries:</strong> {{ medical_history.previous_surgeries }}</p>
+                {% endif %}
+                <a href="/doctor/patient/history/{{ patient.id }}" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="fas fa-file-medical me-1"></i>View Full History
+                </a>
+            </div>
+            {% endif %}
+
+            <form method="POST" class="needs-validation">
+                <div class="mb-3">
+                    <label for="diagnosis" class="form-label fw-bold">Diagnosis</label>
+                    <textarea name="diagnosis" id="diagnosis" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="treatment_plan" class="form-label fw-bold">Treatment Plan</label>
+                    <textarea name="treatment_plan" id="treatment_plan" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="prescription" class="form-label fw-bold">Prescription</label>
+                    <textarea name="prescription" id="prescription" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="notes" class="form-label fw-bold">Notes</label>
+                    <textarea name="notes" id="notes" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="next_visit_date" class="form-label fw-bold">Next Visit Date</label>
+                    <input type="date" name="next_visit_date" id="next_visit_date" class="form-control">
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/doctor/appointments" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Appointments
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Diagnosis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
