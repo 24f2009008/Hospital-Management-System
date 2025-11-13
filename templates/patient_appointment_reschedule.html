@@ -1,0 +1,188 @@
+{% extends "patient_base.html" %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="page-header p-4 shadow-sm bg-white rounded-4">
+            <h2 class="fw-bold text-primary mb-1"><i class="fas fa-calendar-alt me-2"></i>Reschedule Appointment</h2>
+            <p class="text-muted mb-0">Change your appointment date and time.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0 text-primary"><i class="fas fa-info-circle me-2"></i>Current Appointment
+                    Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p><strong>Doctor:</strong> {{ appointment.doctor.user.name }}</p>
+                        <p><strong>Specialization:</strong> {{ appointment.doctor.specialization or 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Current Date:</strong> {{ appointment.appoint_date.strftime('%B %d, %Y') }}</p>
+                        <p><strong>Current Time:</strong> {{ appointment.appoint_time.strftime('%H:%M') }}</p>
+                    </div>
+                </div>
+                <p><strong>Reason:</strong> {{ appointment.reason_for_visit }}</p>
+
+                <hr>
+
+                <h5 class="mb-3 text-primary">Select New Date & Time</h5>
+                <form method="POST" action="/patient/appointments/{{ appointment.id }}/reschedule">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">New Date <span class="text-danger">*</span></label>
+                            <select class="form-select" name="appoint_date" required>
+                                <option value="">Select date...</option>
+                                <optgroup label="This Week">
+                                    {% set today = date.today() %}
+                                    {% for i in range(7) %}
+                                    {% set current_date = today + timedelta(days=i) %}
+                                    {% if current_date.weekday() < 6 %} <option
+                                        value="{{ current_date.strftime('%Y-%m-%d') }}" {% if
+                                        current_date.strftime('%Y-%m-%d')==appointment.appoint_date.strftime('%Y-%m-%d')
+                                        %}selected{% endif %}>
+                                        {{ current_date.strftime('%A, %B %d, %Y') }}
+                                        {% if i == 0 %} (Today){% elif i == 1 %} (Tomorrow){% endif %}
+                                        </option>
+                                        {% endif %}
+                                        {% endfor %}
+                                </optgroup>
+                                <optgroup label="Next Week">
+                                    {% for i in range(7, 14) %}
+                                    {% set current_date = today + timedelta(days=i) %}
+                                    {% if current_date.weekday() < 6 %} <option
+                                        value="{{ current_date.strftime('%Y-%m-%d') }}" {% if
+                                        current_date.strftime('%Y-%m-%d')==appointment.appoint_date.strftime('%Y-%m-%d')
+                                        %}selected{% endif %}>
+                                        {{ current_date.strftime('%A, %B %d, %Y') }}
+                                        </option>
+                                        {% endif %}
+                                        {% endfor %}
+                                </optgroup>
+                                <optgroup label="Later">
+                                    {% for i in range(14, 30) %}
+                                    {% set current_date = today + timedelta(days=i) %}
+                                    {% if current_date.weekday() < 6 %} <option
+                                        value="{{ current_date.strftime('%Y-%m-%d') }}" {% if
+                                        current_date.strftime('%Y-%m-%d')==appointment.appoint_date.strftime('%Y-%m-%d')
+                                        %}selected{% endif %}>
+                                        {{ current_date.strftime('%A, %B %d, %Y') }}
+                                        </option>
+                                        {% endif %}
+                                        {% endfor %}
+                                </optgroup>
+                            </select>
+                            <small class="text-muted">Weekdays only (Monday - Saturday)</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">New Time <span class="text-danger">*</span></label>
+                            <select class="form-select" name="appoint_time" required>
+                                <option value="">Select time...</option>
+                                <optgroup label="Morning (8 AM - 12 PM)">
+                                    <option value="08:00" {% if appointment.appoint_time.strftime('%H:%M')=='08:00'
+                                        %}selected{% endif %}>08:00 AM</option>
+                                    <option value="08:30" {% if appointment.appoint_time.strftime('%H:%M')=='08:30'
+                                        %}selected{% endif %}>08:30 AM</option>
+                                    <option value="09:00" {% if appointment.appoint_time.strftime('%H:%M')=='09:00'
+                                        %}selected{% endif %}>09:00 AM</option>
+                                    <option value="09:30" {% if appointment.appoint_time.strftime('%H:%M')=='09:30'
+                                        %}selected{% endif %}>09:30 AM</option>
+                                    <option value="10:00" {% if appointment.appoint_time.strftime('%H:%M')=='10:00'
+                                        %}selected{% endif %}>10:00 AM</option>
+                                    <option value="10:30" {% if appointment.appoint_time.strftime('%H:%M')=='10:30'
+                                        %}selected{% endif %}>10:30 AM</option>
+                                    <option value="11:00" {% if appointment.appoint_time.strftime('%H:%M')=='11:00'
+                                        %}selected{% endif %}>11:00 AM</option>
+                                    <option value="11:30" {% if appointment.appoint_time.strftime('%H:%M')=='11:30'
+                                        %}selected{% endif %}>11:30 AM</option>
+                                </optgroup>
+                                <optgroup label="Afternoon (12 PM - 5 PM)">
+                                    <option value="12:00" {% if appointment.appoint_time.strftime('%H:%M')=='12:00'
+                                        %}selected{% endif %}>12:00 PM</option>
+                                    <option value="12:30" {% if appointment.appoint_time.strftime('%H:%M')=='12:30'
+                                        %}selected{% endif %}>12:30 PM</option>
+                                    <option value="13:00" {% if appointment.appoint_time.strftime('%H:%M')=='13:00'
+                                        %}selected{% endif %}>01:00 PM</option>
+                                    <option value="13:30" {% if appointment.appoint_time.strftime('%H:%M')=='13:30'
+                                        %}selected{% endif %}>01:30 PM</option>
+                                    <option value="14:00" {% if appointment.appoint_time.strftime('%H:%M')=='14:00'
+                                        %}selected{% endif %}>02:00 PM</option>
+                                    <option value="14:30" {% if appointment.appoint_time.strftime('%H:%M')=='14:30'
+                                        %}selected{% endif %}>02:30 PM</option>
+                                    <option value="15:00" {% if appointment.appoint_time.strftime('%H:%M')=='15:00'
+                                        %}selected{% endif %}>03:00 PM</option>
+                                    <option value="15:30" {% if appointment.appoint_time.strftime('%H:%M')=='15:30'
+                                        %}selected{% endif %}>03:30 PM</option>
+                                    <option value="16:00" {% if appointment.appoint_time.strftime('%H:%M')=='16:00'
+                                        %}selected{% endif %}>04:00 PM</option>
+                                    <option value="16:30" {% if appointment.appoint_time.strftime('%H:%M')=='16:30'
+                                        %}selected{% endif %}>04:30 PM</option>
+                                </optgroup>
+                                <optgroup label="Evening (5 PM - 8 PM)">
+                                    <option value="17:00" {% if appointment.appoint_time.strftime('%H:%M')=='17:00'
+                                        %}selected{% endif %}>05:00 PM</option>
+                                    <option value="17:30" {% if appointment.appoint_time.strftime('%H:%M')=='17:30'
+                                        %}selected{% endif %}>05:30 PM</option>
+                                    <option value="18:00" {% if appointment.appoint_time.strftime('%H:%M')=='18:00'
+                                        %}selected{% endif %}>06:00 PM</option>
+                                    <option value="18:30" {% if appointment.appoint_time.strftime('%H:%M')=='18:30'
+                                        %}selected{% endif %}>06:30 PM</option>
+                                    <option value="19:00" {% if appointment.appoint_time.strftime('%H:%M')=='19:00'
+                                        %}selected{% endif %}>07:00 PM</option>
+                                    <option value="19:30" {% if appointment.appoint_time.strftime('%H:%M')=='19:30'
+                                        %}selected{% endif %}>07:30 PM</option>
+                                    <option value="20:00" {% if appointment.appoint_time.strftime('%H:%M')=='20:00'
+                                        %}selected{% endif %}>08:00 PM</option>
+                                </optgroup>
+                            </select>
+                            <small class="text-muted">Choose a new time slot</small>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Please ensure the selected time is within the doctor's availability hours.
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="/patient/appointments" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check me-2"></i>Reschedule Appointment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-select {
+        cursor: pointer;
+    }
+
+    .form-select optgroup {
+        font-weight: bold;
+        font-style: normal;
+        background-color: #f8f9fa;
+        color: #495057;
+    }
+
+    .form-select option {
+        padding: 8px;
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #b3d9ff;
+        color: #004085;
+    }
+</style>
+{% endblock %}

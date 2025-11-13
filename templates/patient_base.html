@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Portal - Hospital Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,14 +17,15 @@
         }
 
         :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --primary-light: #60a5fa;
-            --secondary: #06b6d4;
+            /* ===== Green/Emerald Theme - Patient Portal ===== */
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --secondary: #14b8a6;
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --info: #3b82f6;
+            --info: #06b6d4;
             --dark: #1e293b;
             --light: #f8fafc;
             --white: #ffffff;
@@ -47,7 +50,7 @@
             line-height: 1.6;
         }
 
-        /* Sidebar Styles */
+        /* Sidebar */
         .sidebar {
             position: fixed;
             top: 0;
@@ -66,88 +69,72 @@
             width: 6px;
         }
 
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
         .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 3px;
         }
 
-        .sidebar.collapsed {
-            left: -280px;
-        }
-
         .sidebar-header {
-            padding: 2rem 1.5rem 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 1.5rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .sidebar-header h4 {
             color: white;
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 700;
-            margin: 0;
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            letter-spacing: 0.3px;
         }
 
         .sidebar-header h4 i {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.125rem;
+            font-size: 1.1rem;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
         }
 
-        .sidebar-nav {
-            padding: 1.5rem 0;
-        }
-
+        /* Sidebar Navigation */
         .nav-section-title {
-            color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.6);
             font-size: 0.75rem;
-            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 0 1.5rem;
-            margin: 1.5rem 0 0.75rem;
-        }
-
-        .nav-section-title:first-child {
-            margin-top: 0;
+            padding: 1rem 1.5rem 0.5rem;
         }
 
         .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.75);
             padding: 0.875rem 1.5rem;
             margin: 0.25rem 1rem;
             border-radius: 10px;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             font-weight: 500;
             font-size: 0.9375rem;
             display: flex;
             align-items: center;
             gap: 0.875rem;
-            position: relative;
             text-decoration: none;
         }
 
         .sidebar .nav-link i {
             width: 20px;
             text-align: center;
-            font-size: 1.125rem;
+            font-size: 1.1rem;
+            opacity: 0.9;
             transition: transform 0.2s ease;
         }
 
         .sidebar .nav-link:hover {
-            background: rgba(99, 102, 241, 0.15);
-            color: white;
+            background: rgba(16, 185, 129, 0.18);
+            color: #fff;
             transform: translateX(2px);
         }
 
@@ -156,10 +143,11 @@
         }
 
         .sidebar .nav-link.active {
-            background: linear-gradient(90deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.2) 100%);
             color: white;
             font-weight: 600;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+            position: relative;
         }
 
         .sidebar .nav-link.active::before {
@@ -170,31 +158,32 @@
             transform: translateY(-50%);
             height: 60%;
             width: 3px;
-            background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+            background: linear-gradient(180deg, var(--primary-light) 0%, var(--primary) 100%);
             border-radius: 0 3px 3px 0;
         }
 
-        /* User Info Card */
+        /* User Info */
         .user-info-card {
-            margin: 1.5rem 1rem 1rem;
+            margin: 1.5rem 1rem 1.5rem;
             padding: 1.25rem;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.06);
             border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.08);
         }
 
         .user-avatar {
             width: 48px;
             height: 48px;
             border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             font-size: 1.125rem;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
         }
 
         .user-info-card .user-details {
@@ -213,106 +202,63 @@
             font-size: 0.8125rem;
         }
 
-        .user-info-card .btn-logout {
+        .btn-logout {
             margin-top: 1rem;
             width: 100%;
             padding: 0.625rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: white;
             border-radius: 8px;
             font-size: 0.875rem;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
         }
 
-        .user-info-card .btn-logout:hover {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.3);
+        .btn-logout:hover {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
         }
+
+
 
         /* Main Content */
         .main-content {
             margin-left: 280px;
             min-height: 100vh;
-            padding: 2rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 2.25rem;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f9fbff 0%, #edf3ff 100%);
         }
 
         .main-content.expanded {
             margin-left: 0;
         }
 
-        /* Toggle Button */
-        .sidebar-toggle {
-            position: fixed;
-            top: 1.25rem;
-            left: 1.25rem;
-            z-index: 1050;
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: white;
-            border: none;
-            color: var(--gray-700);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
 
-        .sidebar-toggle:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-            background: var(--primary);
-            color: white;
-        }
-
-        .sidebar-toggle.shifted {
-            left: 295px;
-        }
-
-        /* Overlay */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 1030;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar-overlay.show {
-            display: block;
-        }
 
         /* Cards */
         .card {
             border: none;
             border-radius: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
             background: white;
-            overflow: hidden;
+            margin-bottom: 1.5rem;
             transition: all 0.3s ease;
         }
 
         .card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
         }
 
         .card-header {
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            color: white;
             font-weight: 600;
-            color: var(--gray-900);
+            padding: 1.25rem 1.5rem;
+            border-bottom: none;
         }
 
         .card-body {
@@ -330,145 +276,51 @@
             position: relative;
         }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
-        }
 
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-card .card-body {
-            padding: 1.75rem;
-        }
-
-        .stat-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        /* Tables */
-        .table {
-            margin-bottom: 0;
-        }
-
-        .table thead th {
-            background: var(--gray-50);
-            border-bottom: 2px solid var(--gray-200);
-            color: var(--gray-700);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            padding: 1rem 1.25rem;
-            white-space: nowrap;
-        }
-
-        .table tbody tr {
-            transition: all 0.2s ease;
-            border-bottom: 1px solid var(--gray-100);
-        }
-
-        .table tbody tr:hover {
-            background: var(--gray-50);
-        }
-
-        .table tbody td {
-            padding: 1rem 1.25rem;
-            vertical-align: middle;
-        }
-
-        /* Badges */
-        .badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.75rem;
-            letter-spacing: 0.025em;
-        }
 
         /* Buttons */
-        .btn {
-            border-radius: 10px;
-            padding: 0.625rem 1.25rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-            border: none;
-        }
-
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
         }
 
-        .btn-group-sm .btn {
-            padding: 0.375rem 0.75rem;
-            font-size: 0.8125rem;
-        }
+
 
         /* Page Header */
         .page-header {
             background: white;
             padding: 2rem;
             border-radius: 16px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.1);
             margin-bottom: 2rem;
         }
 
         .page-header h2 {
-            color: var(--gray-900);
+            color: var(--primary-dark);
             font-weight: 700;
-            font-size: 1.875rem;
             margin-bottom: 0.5rem;
         }
 
-        .page-header p {
-            color: var(--gray-600);
-            margin-bottom: 0;
-            font-size: 0.9375rem;
-        }
+
 
         /* Alerts */
         .alert {
             border: none;
             border-radius: 12px;
-            padding: 1rem 1.25rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.08);
         }
 
-        /* Forms */
-        .form-control,
-        .form-select {
-            border-radius: 10px;
-            border: 1px solid var(--gray-300);
-            padding: 0.625rem 1rem;
-            font-size: 0.9375rem;
-            transition: all 0.2s ease;
-        }
 
-        .form-control:focus,
-        .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
 
         /* Responsive */
         @media (max-width: 992px) {
@@ -480,93 +332,16 @@
                 left: 0;
             }
 
-            .sidebar-toggle {
-                display: flex;
-            }
-
-            .sidebar-toggle.shifted {
-                left: 295px;
-            }
-
             .main-content {
                 margin-left: 0;
-                padding: 1rem;
+                padding: 1.25rem;
                 padding-top: 5rem;
             }
-
-            .page-header h2 {
-                font-size: 1.5rem;
-            }
-
-            .table {
-                font-size: 0.875rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .page-header {
-                padding: 1.25rem;
-            }
-
-            .card-body {
-                padding: 1rem;
-            }
-
-            .table thead th,
-            .table tbody td {
-                padding: 0.75rem;
-                font-size: 0.8125rem;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .card,
-        .stat-card {
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--gray-100);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--gray-400);
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--gray-500);
         }
     </style>
 </head>
 
 <body>
-    <!-- Sidebar Toggle Button -->
-    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -582,11 +357,13 @@
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
-            <a class="nav-link {{ 'active' if request.endpoint == 'patient_appointments' }}" href="/patient/appointments">
+            <a class="nav-link {{ 'active' if request.endpoint == 'patient_appointments' }}"
+                href="/patient/appointments">
                 <i class="fas fa-calendar-check"></i>
                 <span>My Appointments</span>
             </a>
-            <a class="nav-link {{ 'active' if request.endpoint == 'patient_book_appointment' }}" href="/patient/appointments/book">
+            <a class="nav-link {{ 'active' if request.endpoint == 'patient_book_appointment' }}"
+                href="/patient/appointments/book">
                 <i class="fas fa-calendar-plus"></i>
                 <span>Book Appointment</span>
             </a>
@@ -596,9 +373,10 @@
             </a>
 
             <div class="nav-section-title">Health Records</div>
-            <a class="nav-link {{ 'active' if request.endpoint == 'patient_history' }}" href="/patient/history">
+            <a class="nav-link {{ 'active' if request.endpoint == 'patient_treatment_history' }}"
+                href="/patient/treatments">
                 <i class="fas fa-file-medical"></i>
-                <span>Medical History</span>
+                <span>Treatment History</span>
             </a>
             <a class="nav-link {{ 'active' if request.endpoint == 'patient_profile' }}" href="/patient/profile">
                 <i class="fas fa-user-cog"></i>
@@ -628,7 +406,8 @@
         {% if messages %}
         {% for category, message in messages %}
         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'warning' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
+            <i
+                class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'warning' else 'info-circle' if category == 'info' else 'exclamation-circle' }} me-2"></i>
             {{ message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -640,55 +419,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const toggle = document.getElementById('sidebarToggle');
-            const mainContent = document.getElementById('mainContent');
-
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
-            toggle.classList.toggle('shifted');
-
-            if (window.innerWidth > 992) {
-                mainContent.classList.toggle('expanded');
-                sidebar.classList.toggle('collapsed');
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
-            sidebarLinks.forEach(link => {
-                link.addEventListener('click', function () {
-                    if (window.innerWidth <= 992) {
-                        toggleSidebar();
-                    }
-                });
-            });
-
-            const toggle = document.getElementById('sidebarToggle');
-            if (window.innerWidth > 992) {
-                toggle.style.display = 'flex';
-            }
-        });
-
-        window.addEventListener('resize', function () {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const toggle = document.getElementById('sidebarToggle');
-
-            if (window.innerWidth > 992) {
-                toggle.style.display = 'flex';
-                overlay.classList.remove('show');
-            } else {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-                toggle.classList.remove('shifted');
-                toggle.style.display = 'flex';
-            }
-        });
-    </script>
 </body>
 
 </html>

@@ -14,38 +14,57 @@
         <h5 class="card-title mb-0">Search Filters</h5>
     </div>
     <div class="card-body">
-        <form id="doctorSearchForm">
+        <form method="GET" action="/patient/doctors">
             <div class="row">
                 <div class="col-md-4 mb-3">
-                    <label for="searchName" class="form-label">Doctor Name</label>
-                    <input type="text" class="form-control" id="searchName" placeholder="Enter doctor name...">
+                    <label for="search" class="form-label">Doctor Name</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search_query or '' }}" placeholder="Enter doctor name...">
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label for="searchDepartment" class="form-label">Department</label>
-                    <select class="form-select" id="searchDepartment">
+                <div class="col-md-3 mb-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select class="form-select" id="department" name="department">
                         <option value="">All Departments</option>
-                        {% for department in departments %}
-                        <option value="{{ department.name }}">{{ department.name }}</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.name }}" {% if selected_department == dept.name %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label for="searchExperience" class="form-label">Minimum Experience</label>
-                    <select class="form-select" id="searchExperience">
-                        <option value="">Any Experience</option>
-                        <option value="1">1+ years</option>
-                        <option value="5">5+ years</option>
-                        <option value="10">10+ years</option>
-                        <option value="15">15+ years</option>
-                    </select>
+                <div class="col-md-3 mb-3">
+                    <label for="specialization" class="form-label">Specialization</label>
+                    <input type="text" class="form-control" id="specialization" name="specialization" 
+                           value="{{ selected_specialization or '' }}" placeholder="e.g., Cardiology">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
                 </div>
             </div>
-
+            <div class="row">
+                <div class="col-12">
+                    <a href="/patient/doctors" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-redo me-2"></i>Clear Filters
+                    </a>
+                </div>
+            </div>
         </form>
     </div>
 </div>
 
+<!-- Results Summary -->
+{% if search_query or selected_specialization or selected_department %}
+<div class="alert alert-info mb-4">
+    <i class="fas fa-info-circle me-2"></i>
+    Found <strong>{{ doctors|length }}</strong> doctor(s) matching your search criteria.
+</div>
+{% endif %}
+
 <!-- Doctors Grid -->
+{% if doctors %}
 <div class="row" id="doctorsGrid">
     {% for doctor in doctors %}
     <div class="col-md-6 col-lg-4 mb-4 doctor-card" 
@@ -81,13 +100,14 @@
     </div>
     {% endfor %}
 </div>
-
+{% else %}
 <!-- No Results Message -->
-<div id="noResults" class="text-center py-5" style="display: none;">
+<div class="text-center py-5">
     <i class="fas fa-user-md text-muted fs-1 mb-3"></i>
     <h5 class="text-muted">No doctors found</h5>
-    <p class="text-muted">Try adjusting your search criteria.</p>
+    <p class="text-muted">Try adjusting your search criteria or clear the filters.</p>
 </div>
+{% endif %}
 
 <!-- Doctor Profile Modal -->
 <div class="modal fade" id="doctorProfileModal" tabindex="-1">
@@ -114,7 +134,7 @@
 .user-avatar {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
+    border-radius: 12px;
     background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
     display: flex;

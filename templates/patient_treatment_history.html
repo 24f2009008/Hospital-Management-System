@@ -19,20 +19,20 @@
             <div class="col-md-6">
                 <h6>Allergies</h6>
                 <p>{{ medical_history.allergies or 'None reported' }}</p>
-                
+
                 <h6>Chronic Conditions</h6>
                 <p>{{ medical_history.chronic_conditions or 'None reported' }}</p>
-                
+
                 <h6>Current Medications</h6>
                 <p>{{ medical_history.current_medications or 'None reported' }}</p>
             </div>
             <div class="col-md-6">
                 <h6>Previous Surgeries</h6>
                 <p>{{ medical_history.previous_surgeries or 'None reported' }}</p>
-                
+
                 <h6>Family History</h6>
                 <p>{{ medical_history.family_history or 'None reported' }}</p>
-                
+
                 <h6>Lifestyle</h6>
                 <p>
                     <strong>Smoking:</strong> {{ medical_history.smoking_status or 'Not specified' }}<br>
@@ -58,64 +58,44 @@
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">{{ treatment.date.strftime('%B %d, %Y') }}</h6>
-                            <small class="text-muted">{{ treatment.doctor_name }} - {{ treatment.department }}</small>
+                            <h6 class="mb-0">{{ treatment.treatment_date.strftime('%B %d, %Y') if
+                                treatment.treatment_date else 'N/A' }}</h6>
+                            <small class="text-muted">
+                                {{ treatment.doctor.user.name if treatment.doctor and treatment.doctor.user else 'N/A'
+                                }}
+                                {% if treatment.doctor and treatment.doctor.department %}
+                                - {{ treatment.doctor.department.name }}
+                                {% endif %}
+                            </small>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <h6>Chief Complaint</h6>
-                                <p>{{ treatment.chief_complaint or treatment.reason_for_visit or 'Not specified' }}</p>
-                                
+                                {% if treatment.appointment and treatment.appointment.reason_for_visit %}
+                                <h6>Reason for Visit</h6>
+                                <p>{{ treatment.appointment.reason_for_visit }}</p>
+                                {% endif %}
+
                                 <h6>Diagnosis</h6>
                                 <p>{{ treatment.diagnosis or 'Not specified' }}</p>
-                                
-                                {% if treatment.tests %}
-                                <h6>Tests Ordered</h6>
-                                <p>{{ treatment.tests }}</p>
-                                {% endif %}
                             </div>
                             <div class="col-md-6">
                                 <h6>Treatment Plan</h6>
                                 <p>{{ treatment.treatment_plan or 'Not specified' }}</p>
-                                
+
                                 <h6>Prescription</h6>
-                                <p>{{ treatment.prescription or 'No medications prescribed' }}</p>
-                                
-                                {% if treatment.follow_up_instructions %}
-                                <h6>Follow-up Instructions</h6>
-                                <p>{{ treatment.follow_up_instructions }}</p>
-                                {% endif %}
+                                <p class="font-monospace">{{ treatment.prescription or 'No medications prescribed' }}
+                                </p>
                             </div>
                         </div>
-                        
-                        {% if treatment.blood_pressure or treatment.heart_rate or treatment.temperature %}
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h6>Vital Signs</h6>
-                                <div class="d-flex gap-4">
-                                    {% if treatment.blood_pressure %}
-                                    <span><strong>BP:</strong> {{ treatment.blood_pressure }}</span>
-                                    {% endif %}
-                                    {% if treatment.heart_rate %}
-                                    <span><strong>HR:</strong> {{ treatment.heart_rate }} bpm</span>
-                                    {% endif %}
-                                    {% if treatment.temperature %}
-                                    <span><strong>Temp:</strong> {{ treatment.temperature }}°F</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        
+
                         {% if treatment.notes %}
                         <hr>
                         <h6>Doctor's Notes</h6>
                         <p class="text-muted">{{ treatment.notes }}</p>
                         {% endif %}
-                        
+
                         {% if treatment.next_visit_date %}
                         <div class="alert alert-info mt-3">
                             <i class="fas fa-calendar-check me-2"></i>
@@ -141,40 +121,40 @@
 </div>
 
 <style>
-.timeline {
-    position: relative;
-}
+    .timeline {
+        position: relative;
+    }
 
-.timeline-item {
-    position: relative;
-    padding-left: 2rem;
-}
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+    }
 
-.timeline-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 12px;
-    height: 12px;
-    background: #28a745;
-    border-radius: 50%;
-    border: 3px solid #fff;
-    box-shadow: 0 0 0 3px #28a745;
-}
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        background: #28a745;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 3px #28a745;
+    }
 
-.timeline-item::after {
-    content: '';
-    position: absolute;
-    left: 5px;
-    top: 12px;
-    width: 2px;
-    height: calc(100% - 12px);
-    background: #dee2e6;
-}
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 12px;
+        width: 2px;
+        height: calc(100% - 12px);
+        background: #dee2e6;
+    }
 
-.timeline-item:last-child::after {
-    display: none;
-}
+    .timeline-item:last-child::after {
+        display: none;
+    }
 </style>
 {% endblock %}

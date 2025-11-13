@@ -21,7 +21,7 @@
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <h6 class="text-muted">Total Appointments</h6>
-                        <h3 class="text-primary">{{ total_appointments }}</h3>
+                        <h3 class="text-primary">{{ appointments|length }}</h3>
                     </div>
                     <div class="flex-shrink-0">
                         <i class="fas fa-calendar-check text-primary fs-2"></i>
@@ -85,14 +85,14 @@
                 <tbody>
                     {% for appointment in appointments %}
                     <tr>
-                        <td>#APT{{ "%06d"|format(appointment.id) }}</td>
-                        <td>{{ appointment.doctor_name }}</td>
-                        <td>{{ appointment.department }}</td>
+                        <td>{{ appointment.appointment_number or ('#APT' + '%06d'|format(appointment.id)) }}</td>
+                        <td>{{ appointment.doctor.user.name if appointment.doctor and appointment.doctor.user else 'N/A' }}</td>
+                        <td>{{ appointment.doctor.department.name if appointment.doctor and appointment.doctor.department else 'General' }}</td>
                         <td>
-                            {{ appointment.appointment_date }}<br>
-                            <small class="text-muted">{{ appointment.appointment_time }}</small>
+                            {{ appointment.appoint_date.strftime('%Y-%m-%d') if appointment.appoint_date else 'N/A' }}<br>
+                            <small class="text-muted">{{ appointment.appoint_time.strftime('%H:%M') if appointment.appoint_time else 'N/A' }}</small>
                         </td>
-                        <td>{{ appointment.reason }}</td>
+                        <td>{{ appointment.reason_for_visit or 'N/A' }}</td>
                         <td>
                             <span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' if appointment.status == 'Booked' else 'danger' if appointment.status == 'Cancelled' else 'info' }}">
                                 {{ appointment.status }}

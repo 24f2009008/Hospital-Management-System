@@ -1,0 +1,154 @@
+{% extends "patient_base.html" %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="page-header p-4 shadow-sm bg-white rounded-4">
+            <h2 class="fw-bold text-success mb-1"><i class="fas fa-calendar-check me-2"></i>Appointment Details</h2>
+            <p class="text-muted mb-0">View your appointment information and treatment details.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Appointment Info -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0 text-success"><i class="fas fa-calendar me-2"></i>Appointment Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Appointment Number</label>
+                        <p class="fw-bold">{{ appointment.appointment_number }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Status</label>
+                        <p>
+                            <span class="badge bg-{{ 'success' if appointment.status == 'Completed' else 'warning' if appointment.status == 'Booked' else 'danger' }}">
+                                {{ appointment.status }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Date</label>
+                        <p class="fw-bold">{{ appointment.appoint_date.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small">Time</label>
+                        <p class="fw-bold">{{ appointment.appoint_time.strftime('%I:%M %p') }}</p>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small">Reason for Visit</label>
+                    <p>{{ appointment.reason_for_visit or 'N/A' }}</p>
+                </div>
+                
+                {% if appointment.status == 'Booked' %}
+                <div class="d-flex gap-2">
+                    <a href="/patient/appointments/{{ appointment.id }}/reschedule" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Reschedule
+                    </a>
+                    <form method="POST" action="/patient/appointments/{{ appointment.id }}/cancel" class="d-inline">
+                        <button type="submit" class="btn btn-danger" 
+                                onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                            <i class="fas fa-times me-2"></i>Cancel Appointment
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Treatment Details (if completed) -->
+        {% if appointment.status == 'Completed' and appointment.treatment %}
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0 text-success"><i class="fas fa-notes-medical me-2"></i>Treatment Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small">Diagnosis</label>
+                    <p>{{ appointment.treatment.diagnosis or 'N/A' }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small">Treatment Plan</label>
+                    <p>{{ appointment.treatment.treatment_plan or 'N/A' }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="text-muted small">Prescription</label>
+                    <p class="font-monospace">{{ appointment.treatment.prescription or 'No prescription' }}</p>
+                </div>
+                
+                {% if appointment.treatment.notes %}
+                <div class="mb-3">
+                    <label class="text-muted small">Doctor's Notes</label>
+                    <p>{{ appointment.treatment.notes }}</p>
+                </div>
+                {% endif %}
+                
+                {% if appointment.treatment.next_visit_date %}
+                <div class="alert alert-info">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    <strong>Next Visit:</strong> {{ appointment.treatment.next_visit_date.strftime('%B %d, %Y') }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Doctor Info -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0 text-success"><i class="fas fa-user-md me-2"></i>Doctor Information</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="doctor-avatar mx-auto mb-3">
+                    {{ appointment.doctor.user.name[3] if appointment.doctor.user.name.startswith('Dr.') else appointment.doctor.user.name[0] }}
+                </div>
+                <h5 class="fw-bold">{{ appointment.doctor.user.name }}</h5>
+                <p class="text-muted mb-1">{{ appointment.doctor.specialization or 'General Physician' }}</p>
+                <hr>
+                <div class="text-start small">
+                    <p><strong>Qualification:</strong> {{ appointment.doctor.qualification or 'N/A' }}</p>
+                    <p><strong>Experience:</strong> {{ appointment.doctor.experience or 'N/A' }} years</p>
+                    <p><strong>Department:</strong> {{ appointment.doctor.department.name if appointment.doctor.department else 'General' }}</p>
+                    <p><strong>License:</strong> {{ appointment.doctor.license_number or 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="/patient/appointments" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Appointments
+        </a>
+    </div>
+</div>
+
+<style>
+.doctor-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #20c997, #198754);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
+}
+</style>
+{% endblock %}
