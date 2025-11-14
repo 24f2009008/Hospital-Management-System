@@ -1,0 +1,151 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Treatment Records</h2>
+    <p class="text-muted mb-0">View and manage all treatment records in the system</p>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="/admin/treatments">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="doctor_id" class="form-label">Filter by Doctor</label>
+                    <select class="form-select" id="doctor_id" name="doctor_id">
+                        <option value="">All Doctors</option>
+                        {% for doctor in doctors %}
+                        <option value="{{ doctor.id }}" {% if filter_doctor == doctor.id|string %}selected{% endif %}>
+                            {{ doctor.user.name }} - {{ doctor.specialization or 'General' }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="patient_id" class="form-label">Filter by Patient</label>
+                    <select class="form-select" id="patient_id" name="patient_id">
+                        <option value="">All Patients</option>
+                        {% for patient in patients %}
+                        <option value="{{ patient.id }}" {% if filter_patient == patient.id|string %}selected{% endif %}>
+                            {{ patient.user.name }} - PAT{{ '%06d'|format(patient.id) }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <a href="/admin/treatments" class="btn btn-outline-secondary">
+                            <i class="fas fa-redo"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Treatment Records -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-file-medical me-2"></i>Treatment Records ({{ treatments|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if treatments %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Diagnosis</th>
+                        <th>Treatment Plan</th>
+                        <th>Next Visit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for treatment in treatments %}
+                    <tr>
+                        <td>{{ treatment.treatment_date.strftime('%Y-%m-%d') if treatment.treatment_date else 'N/A' }}</td>
+                        <td>
+                            <a href="/admin/patient/{{ treatment.patid }}/treatments" class="text-decoration-none">
+                                {{ treatment.patient.user.name if treatment.patient else 'N/A' }}
+                            </a>
+                        </td>
+                        <td>{{ treatment.doctor.user.name if treatment.doctor else 'N/A' }}</td>
+                        <td>{{ treatment.diagnosis[:40] + '...' if treatment.diagnosis and treatment.diagnosis|length > 40 else treatment.diagnosis or 'N/A' }}</td>
+                        <td>{{ treatment.treatment_plan[:40] + '...' if treatment.treatment_plan and treatment.treatment_plan|length > 40 else treatment.treatment_plan or 'N/A' }}</td>
+                        <td>{{ treatment.next_visit_date.strftime('%Y-%m-%d') if treatment.next_visit_date else 'N/A' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#treatmentModal{{ treatment.id }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Treatment Detail Modal -->
+                    <div class="modal fade" id="treatmentModal{{ treatment.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Treatment Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <p><strong>Patient:</strong> {{ treatment.patient.user.name if treatment.patient else 'N/A' }}</p>
+                                            <p><strong>Doctor:</strong> {{ treatment.doctor.user.name if treatment.doctor else 'N/A' }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Date:</strong> {{ treatment.treatment_date.strftime('%Y-%m-%d %H:%M') if treatment.treatment_date else 'N/A' }}</p>
+                                            <p><strong>Next Visit:</strong> {{ treatment.next_visit_date.strftime('%Y-%m-%d') if treatment.next_visit_date else 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <h6><strong>Diagnosis:</strong></h6>
+                                    <p style="white-space: pre-line;">{{ treatment.diagnosis or 'N/A' }}</p>
+                                    <hr>
+                                    <h6><strong>Treatment Plan:</strong></h6>
+                                    <p style="white-space: pre-line;">{{ treatment.treatment_plan or 'N/A' }}</p>
+                                    <hr>
+                                    <h6><strong>Prescription:</strong></h6>
+                                    <p style="white-space: pre-line;">{{ treatment.prescription or 'N/A' }}</p>
+                                    <hr>
+                                    <h6><strong>Notes:</strong></h6>
+                                    <p style="white-space: pre-line;">{{ treatment.notes or 'N/A' }}</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="/admin/patient/{{ treatment.patid }}/treatments" class="btn btn-primary">
+                                        View Patient History
+                                    </a>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-medical text-muted" style="font-size: 4rem;"></i>
+            <p class="text-muted mt-3">No treatment records found.</p>
+            {% if filter_doctor or filter_patient %}
+            <a href="/admin/treatments" class="btn btn-outline-primary">Clear Filters</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -589,6 +589,10 @@
                 <i class="fas fa-calendar-check"></i>
                 <span>Appointments</span>
             </a>
+            <a class="nav-link {{ 'active' if request.endpoint == 'admin_treatments' }}" href="/admin/treatments">
+                <i class="fas fa-file-medical"></i>
+                <span>Treatment Records</span>
+            </a>
 
             <div class="nav-section-title">System</div>
             <a class="nav-link {{ 'active' if request.endpoint == 'admin_departments' }}" href="/admin/departments">

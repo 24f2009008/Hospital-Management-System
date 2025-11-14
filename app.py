@@ -1731,6 +1731,88 @@ def admin_reports():
     finally:
         session.close()
 
+
+@app.route("/admin/patient/<int:patient_id>/treatments")
+@login_required
+def admin_patient_treatments(patient_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        patient = session.query(Patient).filter_by(id=patient_id).first()
+        if not patient:
+            flash("Patient not found.", "danger")
+            return redirect("/admin/patients")
+        
+        # Get all treatments for this patient
+        treatments = session.query(Treatment).filter_by(patid=patient_id).order_by(
+            Treatment.treatment_date.desc()
+        ).all()
+        
+        # Get all appointments for this patient
+        appointments = session.query(Appointment).filter_by(patid=patient_id).order_by(
+            Appointment.appoint_date.desc()
+        ).all()
+        
+        # Get medical history
+        medical_history = session.query(MedicalHistory).filter_by(patid=patient_id).first()
+        
+        return render_template("admin_patient_treatments.html",
+                             patient=patient,
+                             treatments=treatments,
+                             appointments=appointments,
+                             medical_history=medical_history,
+                             calculate_age=calculate_age)
+    except Exception as e:
+        print(f"[ERROR] Admin patient treatments: {e}")
+        flash("Error loading patient treatments.", "danger")
+        return redirect("/admin/patients")
+    finally:
+        session.close()
+
+
+@app.route("/admin/treatments")
+@login_required
+def admin_treatments():
+    if current_user.role != "admin":
+        flash("Access denied.", "danger")
+        return redirect("/login")
+    
+    session = SessionLocal()
+    try:
+        # Get all treatments with filters
+        filter_doctor = request.args.get("doctor_id", "")
+        filter_patient = request.args.get("patient_id", "")
+        
+        query = session.query(Treatment).join(Doctor).join(Patient)
+        
+        if filter_doctor:
+            query = query.filter(Treatment.docid == filter_doctor)
+        
+        if filter_patient:
+            query = query.filter(Treatment.patid == filter_patient)
+        
+        treatments = query.order_by(Treatment.treatment_date.desc()).all()
+        
+        # Get all doctors and patients for filters
+        doctors = session.query(Doctor).join(User).all()
+        patients = session.query(Patient).join(User).all()
+        
+        return render_template("admin_treatments.html",
+                             treatments=treatments,
+                             doctors=doctors,
+                             patients=patients,
+                             filter_doctor=filter_doctor,
+                             filter_patient=filter_patient)
+    except Exception as e:
+        print(f"[ERROR] Admin treatments: {e}")
+        flash("Error loading treatments.", "danger")
+        return redirect("/admin/dashboard")
+    finally:
+        session.close()
+
 @app.route("/doctor/appointments")
 @login_required
 def doctor_appointments():
